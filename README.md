@@ -36,7 +36,7 @@ Orbital Note is a modern, cloud-synchronized note-taking app available on Androi
 
 ```bash
 # Clone the repository
-git clone <repository-url>
+git clone https://github.com/vxeque/orbital-note.git
 cd orbital-note
 
 # Install dependencies
