@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "989818569774",
+    "project_id": "orbital-note-2be7d",
+    "storage_bucket": "orbital-note-2be7d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:989818569774:android:bb00f79acb4310fed20bbf",
+        "android_client_info": {
+          "package_name": "com.orbitalnote"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCu_MNnjoC79MD-5cwss3siMa13bN6Tl3w"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:989818569774:android:bd5e14163ee459bed20bbf",
+        "android_client_info": {
+          "package_name": "com.xeque.orbitalnote"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCu_MNnjoC79MD-5cwss3siMa13bN6Tl3w"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
