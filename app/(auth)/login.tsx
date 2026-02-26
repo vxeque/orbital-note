@@ -17,7 +17,7 @@ import { Colors } from "@/constants/theme";
 import CustomAlert from "@/components/modal/CustonAlert";
 import ModalSuccess from "@/components/modal/Success";
 
-import { useAuth } from "@/hooks/auth/useAuth";
+import { useAuth } from "@/services/auth/useAuth";
 
 // ─── Separador ────────────────────────────────────────────────────────────────
 const Divider = ({ textColor }: { textColor: string }) => (
