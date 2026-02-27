@@ -22,10 +22,9 @@ const SaveToDriveModal = ({ visible, onClose }) => {
       await sincronizarConDrive();
       setEstado('success');
       setMensaje('Archivo guardado correctamente en Google Drive.');
-    } catch (error) {
-      // console.log(error)
+    } catch (error: any) {
       setEstado('error');
-      setMensaje('Ocurrió un error al guardar. Intenta de nuevo.');
+      setMensaje(error?.message || 'Ocurrio un error al guardar. Intenta de nuevo.');
     }
   };
 
@@ -51,10 +50,10 @@ const SaveToDriveModal = ({ visible, onClose }) => {
               <Image source={require("@/assets/images/Google_Drive_icon.png")} style={{ width: 30, height: 30 }} />            </View>
           </View>
 
-          {/* Título */}
+          {/* Titulo */}
           <Text style={styles.titulo}>Guardar en Drive</Text>
           <Text style={styles.subtitulo}>
-            Se sincronizarán tus datos con Google Drive.
+            Se sincronizaran tus datos con Google Drive.
           </Text>
 
           {/* Estado: cargando */}
@@ -65,7 +64,7 @@ const SaveToDriveModal = ({ visible, onClose }) => {
             </View>
           )}
 
-          {/* Estado: éxito */}
+          {/* Estado: exito */}
           {estado === 'success' && (
             <View style={[styles.estadoContainer, styles.successBox]}>
               <Text style={[styles.estadoTexto, styles.successTexto]}>{mensaje}</Text>

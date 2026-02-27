@@ -19,7 +19,7 @@ import ModalSuccess from "@/components/modal/Success";
 
 import { useAuth } from "@/services/auth/useAuth";
 
-// ─── Separador ────────────────────────────────────────────────────────────────
+// --- Separador ----------------------------------------------------------------
 const Divider = ({ textColor }: { textColor: string }) => (
     <View style={styles.dividerContainer}>
         <View style={styles.dividerLine} />
@@ -28,7 +28,7 @@ const Divider = ({ textColor }: { textColor: string }) => (
     </View>
 );
 
-// ─── Botón de Google ──────────────────────────────────────────────────────────
+// --- Bot�n de Google ----------------------------------------------------------
 const GoogleButton = ({
     onPress,
     disabled,
@@ -42,7 +42,7 @@ const GoogleButton = ({
         disabled={disabled}
         activeOpacity={0.85}
     >
-        {/* Ícono G de Google con colores oficiales */}
+        {/* �cono G de Google con colores oficiales */}
         <View style={styles.googleIconWrapper}>
             <Image source={require('@/assets/images/Google__G__logo.png')} style={{ width: 24, height: 24 }} />
         </View>
@@ -50,7 +50,7 @@ const GoogleButton = ({
     </TouchableOpacity>
 );
 
-// ─── Componente principal ─────────────────────────────────────────────────────
+// --- Componente principal -----------------------------------------------------
 function LoginScreen() {
     const router = useRouter();
     const backgroundColor = useThemeColor({}, "background");
@@ -77,19 +77,19 @@ function LoginScreen() {
 
     const isWeb = Platform.OS === "web";
 
-    // ── Colores dinámicos para la tarjeta de usuario autenticado ────────────────
+    // -- Colores din�micos para la tarjeta de usuario autenticado ----------------
     const cardBg = useThemeColor({ light: "#f5f5f5", dark: "#0000" }, "background");
 
-    // ── Login con email/password ─────────────────────────────────────────────────
+    // -- Login con email/password -------------------------------------------------
     const handleEmailLogin = async () => {
         if (!email || !password) {
-            setAlertMessage("Por favor, ingresa tu correo y contraseña.");
+            setAlertMessage("Por favor, ingresa tu correo y contrase�a.");
             setShowAlert(true);
             return;
         }
     };
 
-    // ── Estado de carga ──────────────────────────────────────────────────────────
+    // -- Estado de carga ----------------------------------------------------------
     if (isLoading) {
         return (
             <View style={[styles.centered, { backgroundColor }]}>
@@ -101,7 +101,7 @@ function LoginScreen() {
         );
     }
 
-    // ── Ya autenticado: mostrar perfil ───────────────────────────────────────────
+    // -- Ya autenticado: mostrar perfil -------------------------------------------
     if (isAuthenticated && user) {
         return (
             <SafeAreaView style={[styles.centered, { backgroundColor }]}>
@@ -123,7 +123,7 @@ function LoginScreen() {
 
                     <View style={styles.syncBadge}>
                         <Text style={styles.syncBadgeText}>
-                            ✓ Sincronizado con Google Drive
+                            ? Sincronizado con Google Drive
                         </Text>
                     </View>
 
@@ -132,7 +132,7 @@ function LoginScreen() {
                         onPress={() => router.replace("/listview")}
                         activeOpacity={0.85}
                     >
-                        <Text style={styles.goToAppText}>Ir a mis notas →</Text>
+                        <Text style={styles.goToAppText}>Ir a mis notas ?</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity
@@ -147,12 +147,12 @@ function LoginScreen() {
         );
     }
 
-    // ── Pantalla de login ────────────────────────────────────────────────────────
+    // -- Pantalla de login --------------------------------------------------------
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: "#000000" }]}>
             <View style={isWeb ? styles.formContainerWeb : styles.formContainer}>
 
-                {/* Logo y título */}
+                {/* Logo y t�tulo */}
                 <Image
                     source={require("@/assets/images/icon.png")}
                     style={styles.logo}
@@ -162,7 +162,7 @@ function LoginScreen() {
                     Tus notas, siempre contigo
                 </Text>
 
-                {/* ── Sección email/password ── */}
+                {/* -- Secci�n email/password -- */}
                 {/* <View style={styles.inputsContainer}>
                     <TextInput
                         style={[
@@ -173,7 +173,7 @@ function LoginScreen() {
                                 backgroundColor: inputBgColor,
                             },
                         ]}
-                        placeholder="Correo electrónico"
+                        placeholder="Correo electr�nico"
                         placeholderTextColor={
                             textColor === Colors.light.text
                                 ? Colors.light.icon
@@ -194,7 +194,7 @@ function LoginScreen() {
                                 backgroundColor: inputBgColor,
                             },
                         ]}
-                        placeholder="Contraseña"
+                        placeholder="Contrase�a"
                         placeholderTextColor={
                             textColor === Colors.light.text
                                 ? Colors.light.icon
@@ -210,7 +210,7 @@ function LoginScreen() {
                         onPress={handleEmailLogin}
                         activeOpacity={0.85}
                     >
-                        <Text style={styles.emailLoginButtonText}>Iniciar Sesión</Text>
+                        <Text style={styles.emailLoginButtonText}>Iniciar Sesi�n</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity
@@ -218,22 +218,22 @@ function LoginScreen() {
                         activeOpacity={0.7}
                     >
                         <Text style={[styles.forgotPasswordText, { color: tintColor }]}>
-                            ¿Olvidaste tu contraseña?
+                            �Olvidaste tu contrase�a?
                         </Text>
                     </TouchableOpacity>
                 </View> */}
 
-                {/* ── Separador ── */}
+                {/* -- Separador -- */}
                 <Divider textColor={inputBorderColor} />
 
-                {/* ── Botón de Google ── */}
+                {/* -- Bot�n de Google -- */}
                 <GoogleButton onPress={login} />
 
                 <Text style={[styles.disclaimer, { color: inputBorderColor }]}>
                     Solo accedemos a los archivos creados por esta app en tu Drive
                 </Text>
 
-                {/* ── Modales ── */}
+                {/* -- Modales -- */}
                 <CustomAlert
                     visible={showAlert}
                     title="Error"
@@ -252,7 +252,7 @@ function LoginScreen() {
 
 export default LoginScreen;
 
-// ─── Estilos ──────────────────────────────────────────────────────────────────
+// --- Estilos ------------------------------------------------------------------
 const styles = StyleSheet.create({
     // Layouts base
     container: {
@@ -312,7 +312,7 @@ const styles = StyleSheet.create({
         marginBottom: 12,
     },
 
-    // Botón email login
+    // Boton email login
     emailLoginButton: {
         width: "100%",
         height: 50,
@@ -361,7 +361,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 4,
     },
 
-    // Botón Google
+    // Bot�n Google
     googleButton: {
         flexDirection: "row",
         alignItems: "center",

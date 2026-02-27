@@ -7,9 +7,9 @@ import {
   TouchableOpacity,
   Text,
   ScrollView,
-  Dimensions,
   Platform,
   Pressable,
+  useWindowDimensions,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { FontAwesome } from "@expo/vector-icons";
@@ -101,7 +101,7 @@ const EditorView: React.FC<EditorViewProps> = ({
     }
   }, [existingNote?.id]);
 
-  // Detectar menciones mediante inyección de JavaScript
+  // Detectar menciones mediante inyeccion de JavaScript
   const checkForMentions = useCallback(() => {
     if (!editor?.webviewRef?.current || isWeb) return;
 
@@ -124,7 +124,7 @@ const EditorView: React.FC<EditorViewProps> = ({
           
           const textAfterAt = text.substring(lastAtIndex + 1);
           
-          // Si hay espacio o salto de línea, no hay mención activa
+          // Si hay espacio o salto de linea, no hay mencion activa
           if (textAfterAt.includes(' ') || textAfterAt.includes('\\n')) {
             window.ReactNativeWebView.postMessage(JSON.stringify({
               type: 'mention-check',
@@ -159,7 +159,7 @@ const EditorView: React.FC<EditorViewProps> = ({
     return () => clearInterval(interval);
   }, [isWeb, editor, checkForMentions]);
 
-  // Insertar mención usando inyección de JavaScript
+  // Insertar mencion usando inyeccion de JavaScript
   const insertMention = useCallback(async (note: Note) => {
     if (!editor?.webviewRef?.current || mentionTriggerPos === null) return;
 
@@ -200,7 +200,7 @@ const EditorView: React.FC<EditorViewProps> = ({
           
           if (!textNode) return;
           
-          // Calcular la posición dentro del nodo
+          // Calcular la posicion dentro del nodo
           const posInNode = lastAtIndex - currentPos;
           const textAfterAt = text.substring(lastAtIndex + 1);
           const queryLength = textAfterAt.search(/[\\s\\n]/) === -1 
@@ -213,7 +213,7 @@ const EditorView: React.FC<EditorViewProps> = ({
           selection.removeAllRanges();
           selection.addRange(range);
           
-          // Crear el elemento de mención
+          // Crear el elemento de mencion
           const mention = document.createElement('span');
           mention.className = 'note-mention';
           mention.setAttribute('data-note-id', '${note.id}');
@@ -224,12 +224,12 @@ const EditorView: React.FC<EditorViewProps> = ({
           range.deleteContents();
           range.insertNode(mention);
           
-          // Añadir espacio después
+          // Anadir espacio despues
           const space = document.createTextNode(' ');
           range.collapse(false);
           range.insertNode(space);
           
-          // Mover el cursor después del espacio
+          // Mover el cursor despues del espacio
           range.setStartAfter(space);
           range.collapse(true);
           selection.removeAllRanges();
@@ -258,7 +258,7 @@ const EditorView: React.FC<EditorViewProps> = ({
     setCurrentQuery("");
   }, [editor, mentionTriggerPos]);
 
-  // Navegación
+  // Navegacion
   const moveUp = () => {
     setSelectedIndex((prev) => (prev > 0 ? prev - 1 : mentionSuggestions.length - 1));
   };
@@ -310,11 +310,11 @@ const EditorView: React.FC<EditorViewProps> = ({
       }
 
       if (data.type === 'mention-inserted') {
-        console.log('Mención insertada:', data.noteId);
+        console.log('Mencion insertada:', data.noteId);
       }
 
       if (data.type === 'mention-error') {
-        console.error('Error al insertar mención:', data.error);
+        console.error('Error al insertar mencion:', data.error);
       }
     } catch (error) {
       // Ignorar mensajes no JSON
@@ -329,9 +329,9 @@ const EditorView: React.FC<EditorViewProps> = ({
           margin: 0;
           padding: 0;
           color: #fff;
-          font-size: 18px;
+          font-size: 12px;
           font-family: Arial;
-          line-height: 1.5;
+          line-height: 1;
           background-color: black;
         }
 
@@ -521,12 +521,12 @@ const EditorView: React.FC<EditorViewProps> = ({
   };
 
   const handleSave = async () => {
-    console.log('Intentando guardar nota con título:', title);
+    console.log('Intentando guardar nota con titulo:', title);
 
     console.log('esperandx', await Promise.race([
       editor.getHTML(),
       new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Timeout: editor.getHTML() tardó demasiado')), 5000)
+        setTimeout(() => reject(new Error('Timeout: editor.getHTML() tardo demasiado')), 5000)
       )
     ]))
 
@@ -572,32 +572,75 @@ const EditorView: React.FC<EditorViewProps> = ({
     }
   };
 
-  const { width, height } = Dimensions.get('window');
+  const { width, height } = useWindowDimensions();
+  const isCompactWeb = isWeb && width < 760;
+  const isSmallWeb = isWeb && width < 430;
 
   return (
     <SafeAreaView style={[isWeb ? styles.containerWeb : styles.containerMovil, { backgroundColor: bgColor }]}>
-      <View style={[isWeb ? styles.webHeader : styles.header, { backgroundColor: bgColor }]}>
+      <View style={[styles.mainCanvas, isWeb && styles.mainCanvasWeb]}>
+        {isWeb ? (
+          <View
+            style={[
+              styles.webHeader,
+              isCompactWeb && styles.webHeaderCompact,
+              { backgroundColor: bgColor },
+            ]}
+          >
+            <View style={[styles.webHeaderSingleRow, isCompactWeb && styles.webHeaderSingleRowCompact]}>
+              <TouchableOpacity style={[styles.backButton, styles.backButtonCompact]} onPress={() => router.push('/listview')}>
+                <FontAwesome name="arrow-left" size={20} color="#3b82f6" />
+              </TouchableOpacity>
+              <View style={styles.styleTag}>
+              <Text
+                style={[styles.headerMainTitle, styles.headerMainTitleCompact, isSmallWeb && styles.headerMainTitleSmall, { color: textColor }]}
+                numberOfLines={1}
+              >
+                {existingNote ? "Editar Nota" : "Nueva Nota"}
+              </Text>
+              <Text style={[styles.headerTagBadge, styles.headerTagBadgeCompact, { color: textColor }]} numberOfLines={1}>
+                {tag} <FontAwesome name="tag" size={12} color="#ffffff" />
+              </Text>
+
+            </View>
+            <Pressable
+              onPress={handleSaveWeb}
+              style={({ pressed, hovered }) => [
+                styles.saveButton,
+                styles.saveButtonPrimary,
+                styles.saveButtonCompact,
+                (pressed || hovered) && styles.saveButtonPrimaryHover,
+              ]}
+            >
+              <Text style={[styles.saveButtonText, styles.saveButtonTextCompact]}>Guardar</Text>
+            </Pressable>
+          </View>
+          </View>
+      ) : (
+      <View style={[styles.header, { backgroundColor: bgColor }]}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.push('/listview')}>
           <FontAwesome name="arrow-left" size={22} color="#3b82f6" />
         </TouchableOpacity>
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <Text style={[styles.headerMainTitle, { color: textColor }]}>
+        <View style={[styles.headerTitleWrap, styles.headerTitleWrapMobile]}>
+          <Text style={[styles.headerMainTitle, { color: textColor }]} numberOfLines={1}>
             {existingNote ? "Editar Nota" : "Nueva Nota"}
-            <Text style={{ color: textColor, backgroundColor: "#ab3bf6c2", borderRadius: 5, padding: 2, paddingLeft: 5, paddingRight: 5, margin: 5, }}>{tag} <FontAwesome name="tag" size={12} color="#ffffff" /></Text>
+          </Text>
+          <Text style={[styles.headerTagBadge, { color: textColor }]} numberOfLines={1}>
+            {tag} <FontAwesome name="tag" size={12} color="#ffffff" />
           </Text>
         </View>
-
         <Pressable
-          onPress={isWeb ? handleSaveWeb : handleSave}
+          onPress={handleSave}
           style={({ pressed, hovered }) => [
             styles.saveButton,
-            (pressed || hovered) && { backgroundColor: '#3b82f6', borderRadius: 10 }
+            styles.saveButtonPrimary,
+            (pressed || hovered) && styles.saveButtonPrimaryHover,
           ]}
         >
-          <Text style={[styles.saveButtonText, { color: '#ffffff' }]}>Guardar</Text>
+          <Text style={styles.saveButtonText}>Guardar</Text>
         </Pressable>
-
       </View>
+        )}
       {/* modales */}
       <CustomAlert
         visible={showAlert}
@@ -617,15 +660,20 @@ const EditorView: React.FC<EditorViewProps> = ({
       <CustomAlert
         visible={showNotTitleAlert}
         title="Error al guardar"
-        message="Por favor, introduce un título."
+        message="Por favor, introduce un titulo."
         onClose={() => setShowNotTitleAlert(false)}
       />
 
-      <Pressable>
+      <Pressable style={[styles.titleInputWrap, isWeb && styles.titleInputWrapWeb]}>
         {({ hovered }) => (
           <TextInput
-            style={[styles.titleInput, { color: textColor, marginHorizontal: 45, borderRadius: 10, padding: 10 }, hovered && { borderColor: '#3b82f6', backgroundColor: '#3b83f65e', borderWidth: 0 }]}
-            placeholder="INTRODUCE UN TÍTULO"
+            style={[
+              styles.titleInput,
+              isCompactWeb && styles.titleInputCompact,
+              { color: textColor },
+              hovered && { borderColor: '#3b82f6', backgroundColor: '#3b83f65e' },
+            ]}
+            placeholder="INTRODUCE UN TITULO"
             placeholderTextColor={subtextColor}
             value={title}
             onChangeText={setTitle}
@@ -655,15 +703,19 @@ const EditorView: React.FC<EditorViewProps> = ({
       {isWeb ? (
         <ScrollView
           style={[styles.content, { backgroundColor: bgColor }]}
-          contentContainerStyle={styles.contentContainer}
+          contentContainerStyle={[styles.contentContainer, styles.contentContainerWeb]}
         >
-          <View style={{
-            minHeight: 300,
-            backgroundColor: bgColor,
-            borderColor: borderColor,
-            borderRadius: 8,
-            padding: 8,
-          }}>
+          <View
+            style={[
+              styles.editorSurface,
+              styles.editorSurfaceWeb,
+              {
+                minHeight: 300,
+                backgroundColor: bgColor,
+                borderColor: borderColor,
+              },
+            ]}
+          >
             <WebEditor
               initialContent={existingNote?.content || ""}
               isDark={isDarkTheme}
@@ -707,8 +759,8 @@ const EditorView: React.FC<EditorViewProps> = ({
             minHeight: 100,
             height: height,
             backgroundColor: bgColor,
-            borderColor: borderColor,
-            borderRadius: 8,
+            // borderColor: borderColor,
+            // borderRadius: 8,
           }}>
             <RichText
               editor={editor}
@@ -724,7 +776,8 @@ const EditorView: React.FC<EditorViewProps> = ({
       ) : (
         <TextEditorToolbar editor={editor} isDark={isDarkTheme} />
       )}
-    </SafeAreaView>
+    </View>
+    </SafeAreaView >
   );
 };
 
@@ -734,60 +787,177 @@ const styles = StyleSheet.create({
   },
   containerWeb: {
     flex: 1,
-    paddingHorizontal: 16,
+    width: "100%",
+  },
+  mainCanvas: {
+    flex: 1,
+  },
+  mainCanvasWeb: {
+    width: "100%",
+    maxWidth: 1450,
+    alignSelf: "center",
+    paddingHorizontal: 12,
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 19,
+    paddingHorizontal: 1,
     paddingVertical: 9,
   },
   webHeader: {
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginHorizontal: 0,
+    marginTop: 10,
+    borderRadius: 14,
+  },
+  webHeaderTopRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 19,
-    paddingVertical: 20,
-    marginHorizontal: 16,
-    marginTop: 16,
+  },
+  webHeaderSingleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    flexWrap: "nowrap",
+    gap: 6,
+  },
+  webHeaderSingleRowCompact: {
+    gap: 4,
+  },
+  webHeaderCompact: {
+    paddingHorizontal: 10,
+    paddingVertical: 10,
+  },
+  headerTitleWrap: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    flexWrap: "wrap",
+    gap: 8,
+    marginTop: 8,
+  },
+  headerTitleWrapCompact: {
+    justifyContent: "flex-start",
+    marginTop: 10,
+  },
+  headerTitleWrapMobile: {
+    flex: 1,
+    marginTop: 0,
+    justifyContent: "center",
   },
   backButton: {
-    paddingRight: 8,
-    paddingLeft: 8,
-  },
-  headerMainTitle: {
-    fontSize: 14,
-    fontWeight: "300",
-    backgroundColor: "#3b84f8a4",
-    color: "#ffffff",
-    paddingHorizontal: 16,
-    paddingVertical: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
     borderRadius: 10,
   },
+  backButtonCompact: {
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+  },
+  headerMainTitle: {
+    fontSize: 15,
+    fontWeight: "700",
+    backgroundColor: "#2563eb",
+    color: "#ffffff",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+  },
+  headerMainTitleSmall: {
+    fontSize: 13,
+    maxWidth: "100%",
+  },
+  headerMainTitleCompact: {
+    fontSize: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  headerTagBadge: {
+    backgroundColor: "#ab3bf6c2",
+    borderRadius: 8,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  headerTagBadgeCompact: {
+    fontSize: 11,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+  },
+  styleTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    flexShrink: 1
+  },
   saveButton: {
-    padding: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+  },
+  saveButtonPrimary: {
+    backgroundColor: "#2563eb",
+  },
+  saveButtonPrimaryHover: {
+    backgroundColor: "#3b82f6",
+  },
+  saveButtonCompact: {
+    paddingVertical: 6,
+    paddingHorizontal: 10,
   },
   saveButtonText: {
-    color: "#3b82f6",
+    color: "#ffffff",
     fontSize: 14,
-    fontWeight: "bold",
+    fontWeight: "700",
+  },
+  saveButtonTextCompact: {
+    fontSize: 12,
   },
   content: {
     flex: 1,
-    paddingHorizontal: 16,
+    paddingHorizontal: 0,
   },
   contentContainer: {
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 24,
+    paddingHorizontal: 12,
+    paddingTop: 8,
+    paddingBottom: 88,
+  },
+  contentContainerWeb: {
+    paddingHorizontal: 0,
+  },
+  titleInputWrap: {
+    marginHorizontal: 12,
+    marginTop: 8,
+  },
+  titleInputWrapWeb: {
+    marginHorizontal: 0,
   },
   titleInput: {
     fontSize: 20,
     fontWeight: "bold",
-    marginBottom: 15,
+    marginBottom: 12,
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 10,
+    // borderWidth: 1,
+    borderColor: "transparent",
     textTransform: "uppercase",
+  },
+  titleInputCompact: {
+    fontSize: 17,
+  },
+  editorSurface: {
+    borderRadius: 8,
+    // padding: 8,
+  },
+  editorSurfaceWeb: {
+    borderRadius: 14,
   },
 });
 
 export default EditorView;
+

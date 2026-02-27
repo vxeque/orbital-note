@@ -209,6 +209,14 @@ const WebEditor: React.FC<WebEditorProps> = ({
           border-radius: 4px;
           cursor: pointer;
         }
+
+        @media (max-width: 760px) {
+          .web-editor-content {
+            padding: 12px;
+            font-size: 16px;
+            line-height: 1.45;
+          }
+        }
       `;
       document.head.appendChild(style);
 

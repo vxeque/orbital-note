@@ -1,5 +1,4 @@
-import React, { useEffect, useState } from "react";
-import { Note, Block } from "@/types/types";
+import React, { useEffect, useMemo, useState } from "react";
 
 interface WebToolbarProps {
   isDark: boolean;
@@ -7,40 +6,37 @@ interface WebToolbarProps {
 }
 
 const WebToolbar: React.FC<WebToolbarProps> = ({ isDark, onSave }) => {
-  const [editorInstance, setEditorInstance] = useState<any>(null);
+  const [isCompact, setIsCompact] = useState<boolean>(false);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      const editorEl = document.querySelector(".ProseMirror");
-      if (editorEl && (window as any).tiptapEditor) {
-        setEditorInstance((window as any).tiptapEditor);
-        clearInterval(interval);
-      }
-    }, 100);
-    return () => clearInterval(interval);
+    const updateCompact = () => {
+      setIsCompact(window.innerWidth < 760);
+    };
+    updateCompact();
+    window.addEventListener("resize", updateCompact);
+    return () => window.removeEventListener("resize", updateCompact);
   }, []);
 
   const bgColor = isDark ? "#1a1a1a" : "#f5f5f5";
   const textColor = isDark ? "#ffffff" : "#000000";
   const borderColor = isDark ? "#333" : "#ddd";
 
-  const buttonStyle: React.CSSProperties = {
-    background: "transparent",
-    border: "none",
-    color: textColor,
-    padding: "8px 12px",
-    cursor: "pointer",
-    fontSize: "16px",
-    fontWeight: "bold",
-    borderRadius: "4px",
-    margin: "0 2px",
-  };
-
-  const activeStyle: React.CSSProperties = {
-    ...buttonStyle,
-    background: "#3b82f6",
-    color: "white",
-  };
+  const buttonStyle: React.CSSProperties = useMemo(
+    () => ({
+      background: "transparent",
+      border: "none",
+      color: textColor,
+      padding: isCompact ? "8px 10px" : "8px 12px",
+      cursor: "pointer",
+      fontSize: isCompact ? "14px" : "16px",
+      fontWeight: "bold",
+      borderRadius: "4px",
+      margin: "0 2px",
+      flex: "0 0 auto",
+      whiteSpace: "nowrap",
+    }),
+    [isCompact, textColor]
+  );
 
   const handleClick = (command: string, value?: any) => {
     const editor = (window as any).tiptapEditor;
@@ -93,14 +89,19 @@ const WebToolbar: React.FC<WebToolbarProps> = ({ isDark, onSave }) => {
     <div
       style={{
         position: "fixed",
-        bottom: 20,
-        left: "50%",
-        transform: "translateX(-50%)",
+        bottom: isCompact ? 10 : 20,
+        left: isCompact ? 8 : "50%",
+        right: isCompact ? 8 : "auto",
+        transform: isCompact ? "none" : "translateX(-50%)",
         backgroundColor: bgColor,
         borderRadius: "15px",
-        padding: "8px 12px",
+        padding: isCompact ? "6px 8px" : "8px 12px",
         display: "flex",
         gap: "4px",
+        overflowX: "auto",
+        overflowY: "hidden",
+        whiteSpace: "nowrap",
+        maxWidth: isCompact ? "calc(100vw - 16px)" : "min(95vw, 980px)",
         boxShadow: "0 2px 10px rgba(0,0,0,0.2)",
         border: `1px solid ${borderColor}`,
         zIndex: 1000,
