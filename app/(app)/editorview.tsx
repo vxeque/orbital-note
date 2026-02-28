@@ -42,19 +42,23 @@ const EditorView: React.FC<EditorViewProps> = ({
   isDark = true,
 }) => {
   const { existingNoteId: existingNoteIdParam, allNotesData } = useLocalSearchParams();
-  const parsedNotes = allNotesData ? JSON.parse(allNotesData as string) : [];
+  const normalizedExistingNoteId = Array.isArray(existingNoteIdParam)
+    ? existingNoteIdParam[0]
+    : existingNoteIdParam;
+  const normalizedAllNotesData = Array.isArray(allNotesData) ? allNotesData[0] : allNotesData;
+  const parsedNotes = normalizedAllNotesData ? JSON.parse(normalizedAllNotesData as string) : [];
   const allNotes: Note[] = parsedNotes;
-  const existingNote: Note | undefined = existingNoteIdParam
-    ? allNotes.find((note) => note.id === existingNoteIdParam)
+  const existingNote: Note | undefined = normalizedExistingNoteId
+    ? allNotes.find((note) => note.id === normalizedExistingNoteId)
     : undefined;
 
   const allNotesRef = useRef(allNotes);
-  const existingNoteIdRef = useRef(existingNoteIdParam);
+  const existingNoteIdRef = useRef(normalizedExistingNoteId);
 
   useEffect(() => {
     allNotesRef.current = allNotes;
-    existingNoteIdRef.current = existingNoteIdParam;
-  }, [allNotes, existingNoteIdParam]);
+    existingNoteIdRef.current = normalizedExistingNoteId;
+  }, [allNotes, normalizedExistingNoteId]);
 
   const [title, setTitle] = useState("");
   const [tag, setTag] = useState("Trabajo");
@@ -84,6 +88,7 @@ const EditorView: React.FC<EditorViewProps> = ({
   const [showAlert, setShowAlert] = useState(false);
   const [showAlertNotSaved, setShowAlertNotSaved] = useState(false);
   const [showNotTitleAlert, setShowNotTitleAlert] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const isDarkTheme = isDark ?? true;
   const bgColor = isDarkTheme ? "black" : "#ffffff";
@@ -331,8 +336,8 @@ const EditorView: React.FC<EditorViewProps> = ({
           color: #fff;
           font-size: 12px;
           font-family: Arial;
-          line-height: 1;
-          background-color: black;
+          line-height: 1.5;
+          background-color: yellow;
         }
 
         /* Estilos para menciones de notas */
@@ -474,12 +479,15 @@ const EditorView: React.FC<EditorViewProps> = ({
   };
 
   const handleSaveWeb = async () => {
+    if (isSaving) return;
+
     if (!title.trim()) {
       setShowNotTitleAlert(true);
       return;
     }
 
     try {
+      setIsSaving(true);
       const sanitizedContent = sanitizeNoteHtml(webContent);
       const outgoingReferences: string[] = [];
       const refRegex = /data-note-id="([^"]+)"/g;
@@ -490,7 +498,7 @@ const EditorView: React.FC<EditorViewProps> = ({
         }
       }
 
-      const noteId = existingNote?.id || Date.now().toString();
+      const noteId = normalizedExistingNoteId || existingNote?.id || Date.now().toString();
       const newNote: Note = {
         id: noteId,
         title,
@@ -517,23 +525,20 @@ const EditorView: React.FC<EditorViewProps> = ({
     } catch (error) {
       setShowAlertNotSaved(true);
       console.error('Error saving note:', error);
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const handleSave = async () => {
-    console.log('Intentando guardar nota con titulo:', title);
-
-    console.log('esperandx', await Promise.race([
-      editor.getHTML(),
-      new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Timeout: editor.getHTML() tardo demasiado')), 5000)
-      )
-    ]))
+    if (isSaving) return;
 
     if (!title.trim()) {
       setShowNotTitleAlert(true);
       return;
     }
+
+    setIsSaving(true);
 
     try {
       const rawContentHTML = await editor.getHTML();
@@ -542,7 +547,7 @@ const EditorView: React.FC<EditorViewProps> = ({
       const outgoingReferences = extractReferences(contentHTML);
       const blocks = extractBlocks(contentHTML);
 
-      const noteId = existingNote?.id || Date.now().toString();
+      const noteId = normalizedExistingNoteId || existingNote?.id || Date.now().toString();
       const newNote: Note = {
         id: noteId,
         title,
@@ -569,6 +574,8 @@ const EditorView: React.FC<EditorViewProps> = ({
     } catch (error) {
       console.error('Error saving note:', error);
       setShowAlertNotSaved(true);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -605,14 +612,18 @@ const EditorView: React.FC<EditorViewProps> = ({
             </View>
             <Pressable
               onPress={handleSaveWeb}
+              disabled={isSaving}
               style={({ pressed, hovered }) => [
                 styles.saveButton,
                 styles.saveButtonPrimary,
                 styles.saveButtonCompact,
+                isSaving && { opacity: 0.6 },
                 (pressed || hovered) && styles.saveButtonPrimaryHover,
               ]}
             >
-              <Text style={[styles.saveButtonText, styles.saveButtonTextCompact]}>Guardar</Text>
+              <Text style={[styles.saveButtonText, styles.saveButtonTextCompact]}>
+                {isSaving ? "Guardando..." : "Guardar"}
+              </Text>
             </Pressable>
           </View>
           </View>
@@ -631,13 +642,15 @@ const EditorView: React.FC<EditorViewProps> = ({
         </View>
         <Pressable
           onPress={handleSave}
+          disabled={isSaving}
           style={({ pressed, hovered }) => [
             styles.saveButton,
             styles.saveButtonPrimary,
+            isSaving && { opacity: 0.6 },
             (pressed || hovered) && styles.saveButtonPrimaryHover,
           ]}
         >
-          <Text style={styles.saveButtonText}>Guardar</Text>
+          <Text style={styles.saveButtonText}>{isSaving ? "Guardando..." : "Guardar"}</Text>
         </Pressable>
       </View>
         )}
@@ -864,16 +877,16 @@ const styles = StyleSheet.create({
     color: "#ffffff",
     paddingHorizontal: 12,
     paddingVertical: 8,
-    borderRadius: 10,
+    borderRadius: 8,
   },
   headerMainTitleSmall: {
     fontSize: 13,
     maxWidth: "100%",
   },
   headerMainTitleCompact: {
-    fontSize: 12,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    fontSize: 11,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
   },
   headerTagBadge: {
     backgroundColor: "#ab3bf6c2",
