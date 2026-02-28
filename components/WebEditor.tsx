@@ -136,16 +136,13 @@ const WebEditor: React.FC<WebEditorProps> = ({
         .web-editor-content {
           min-height: 300px;
           padding: 16px;
-          font-size: 18px;
-          line-height: 1.6;
+          font-size: 15px;
           color: ${isDark ? "#ffffff" : "#000000"};
           background-color: ${isDark ? "black" : "#ffffff"};
           outline: none;
           border-radius: 8px;
-          font-size: 18px;
           font-family: Arial;
-          line-height: 1.5;
-          
+          line-height: 1;
         }
         
         .web-editor-content p {

@@ -772,8 +772,6 @@ const EditorView: React.FC<EditorViewProps> = ({
             minHeight: 100,
             height: height,
             backgroundColor: bgColor,
-            // borderColor: borderColor,
-            // borderRadius: 8,
           }}>
             <RichText
               editor={editor}
@@ -871,8 +869,8 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   headerMainTitle: {
-    fontSize: 15,
-    fontWeight: "700",
+    fontSize: 11,
+    fontWeight: "600",
     backgroundColor: "#2563eb",
     color: "#ffffff",
     paddingHorizontal: 12,
