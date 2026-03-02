@@ -211,7 +211,7 @@ const Viewnote: React.FC<NoteViewerViewProps> = ({
           style={styles.editButton}
           onPress={() =>
             router.push({
-              pathname: "/editor",
+              pathname: "/editorview",
               params: {
                 existingNoteId: existingNote.id,
                 allNotesData: JSON.stringify(allNotes),
