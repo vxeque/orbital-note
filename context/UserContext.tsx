@@ -1,7 +1,8 @@
 // context/UserContext.tsx
-import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { removeAccessToken } from "@/services/tokenStorage";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import React, { createContext, ReactNode, useContext, useEffect, useState } from "react";
+import { Platform } from "react-native";
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 export interface User {
@@ -19,6 +20,9 @@ interface UserContextType {
   clearUser: () => Promise<void>;
   isLoading: boolean;
 }
+
+const NOTES_STORAGE_KEY = "orbital-notes";
+const TAGS_STORAGE_KEY = "orbital-tags";
 
 // ─── Valor por defecto ────────────────────────────────────────────────────────
 const defaultContextValue: UserContextType = {
@@ -69,8 +73,17 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
   const clearUser = async (): Promise<void> => {
     try {
+      if (Platform.OS === "web") {
+        localStorage.removeItem(NOTES_STORAGE_KEY);
+        localStorage.removeItem(TAGS_STORAGE_KEY);
+        AsyncStorage.removeItem("orbital-notes"); 
+      }
+
       await Promise.all([
         AsyncStorage.removeItem("google_user"),
+        AsyncStorage.removeItem("orbital-notes"),
+        AsyncStorage.removeItem(NOTES_STORAGE_KEY),
+        AsyncStorage.removeItem(TAGS_STORAGE_KEY),
         removeAccessToken(),
         // AsyncStorage.removeItem("google_access_token"),
       ]);
