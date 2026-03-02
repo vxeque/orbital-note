@@ -19,6 +19,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Dimensions } from "react-native";
 import DOMPurify from "dompurify";
+import { getTagBadgeStyle } from "@/utils/tagColors";
 
 const isWeb = Platform.OS === "web";
 
@@ -46,8 +47,7 @@ const Viewnote: React.FC<NoteViewerViewProps> = ({
   const textColor = isDarkTheme ? "#ffffff" : "#000000";
   const borderColor = isDarkTheme ? "#333333" : "#e0e0e0";
   const subtextColor = isDarkTheme ? "#999999" : "#666666";
-  const tagBg = isDarkTheme ? "#1a1a2e" : "#e8f0fe";
-  const tagColor = isDarkTheme ? "#4a9eff" : "#1a73e8";
+  const noteTagStyle = getTagBadgeStyle(existingNote?.tag, existingNote?.tagColor);
 
   // Editor bridge solo lectura: sin autofocus, sin edición
   const mobileEditorBridge = useEditorBridge({
@@ -244,8 +244,13 @@ const Viewnote: React.FC<NoteViewerViewProps> = ({
 
         {/* Meta: tag + fecha */}
         <View style={styles.metaRow}>
-          <View style={[styles.tagBadge, { backgroundColor: tagBg }]}>
-            <Text style={[styles.tagText, { color: tagColor }]}>
+          <View
+            style={[
+              styles.tagBadge,
+              { backgroundColor: noteTagStyle.backgroundColor, borderColor: noteTagStyle.borderColor },
+            ]}
+          >
+            <Text style={[styles.tagText, { color: noteTagStyle.color }]}>
               {existingNote.tag}
             </Text>
           </View>
@@ -413,6 +418,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 3,
     borderRadius: 20,
+    borderWidth: 1,
   },
   tagText: {
     fontSize: 12,

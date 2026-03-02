@@ -73,6 +73,35 @@ const WebEditor: React.FC<WebEditorProps> = ({
       attributes: {
         class: "web-editor-content",
       },
+      handlePaste: (view, event) => {
+        const pastedText = event.clipboardData?.getData("text/plain")?.trim();
+
+        if (!pastedText) {
+          return false;
+        }
+
+        // Ensure URLs are always inserted on paste in web and marked as links.
+        if (/^https?:\/\/\S+$/i.test(pastedText)) {
+          event.preventDefault();
+
+          const { state, dispatch } = view;
+          const { from, to } = state.selection;
+          const linkMark = state.schema.marks.link;
+
+          if (!linkMark) {
+            return false;
+          }
+
+          const textNode = state.schema.text(pastedText, [
+            linkMark.create({ href: pastedText }),
+          ]);
+
+          dispatch(state.tr.replaceRangeWith(from, to, textNode).scrollIntoView());
+          return true;
+        }
+
+        return false;
+      },
     },
     onUpdate: ({ editor: editorInstance }) => {
       if (onContentChange) {
@@ -113,10 +142,10 @@ const WebEditor: React.FC<WebEditorProps> = ({
             tag === "p"
               ? "paragraph"
               : tag.startsWith("h")
-              ? "heading"
-              : tag === "blockquote"
-              ? "blockquote"
-              : "list",
+                ? "heading"
+                : tag === "blockquote"
+                  ? "blockquote"
+                  : "list",
           content,
         });
       }
@@ -178,18 +207,21 @@ const WebEditor: React.FC<WebEditorProps> = ({
         .web-editor-content ul, .web-editor-content ol {
           padding-left: 24px;
           margin: 12px 0;
-        }
+          
+          }
         
         .web-editor-content ul {
           list-style-type: disc;
-        }
+          
+          }
         
         .web-editor-content ol {
           list-style-type: decimal;
+          
         }
         
         .web-editor-content a {
-          color: #3b82f6;
+
           text-decoration: underline;
         }
         
@@ -228,7 +260,7 @@ const WebEditor: React.FC<WebEditorProps> = ({
   }
 
   return (
-    <div style={{ flex: 1, padding:5 }}>
+    <div style={{ flex: 1, padding: 5 }}>
       <EditorContent editor={editor} />
     </div>
   );

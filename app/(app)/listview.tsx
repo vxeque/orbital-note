@@ -16,6 +16,7 @@ import {
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Note } from '@/types/types';
+import { getTagBadgeStyle } from '@/utils/tagColors';
 
 import { useUser } from '@/context/UserContext'
 
@@ -182,36 +183,45 @@ export default function ListViewScreen() {
   }
 
 
-  const renderNoteItem = ({ item }: { item: Note }) => (
-    <TouchableOpacity
-      style={[styles.noteCard, { borderColor, backgroundColor: cardBgColor }]}
-      onPress={() => handleNoteClick(item)}
-      activeOpacity={0.7}
-    >
-      <View style={styles.noteContentWrapper}>
-        <View style={styles.noteBody}>
-          <View style={styles.noteHeader}>
-            <View style={styles.tagContainer}>
-              <Text style={styles.tagText}>{item.tag}</Text>
+  const renderNoteItem = ({ item }: { item: Note }) => {
+    const tagStyle = getTagBadgeStyle(item.tag, item.tagColor);
+
+    return (
+      <TouchableOpacity
+        style={[styles.noteCard, { borderColor, backgroundColor: cardBgColor }]}
+        onPress={() => handleNoteClick(item)}
+        activeOpacity={0.7}
+      >
+        <View style={styles.noteContentWrapper}>
+          <View style={styles.noteBody}>
+            <View style={styles.noteHeader}>
+              <View
+                style={[
+                  styles.tagContainer,
+                  { backgroundColor: tagStyle.backgroundColor, borderColor: tagStyle.borderColor },
+                ]}
+              >
+                <Text style={[styles.tagText, { color: tagStyle.color }]}>{item.tag}</Text>
+              </View>
             </View>
+            <Text style={[styles.noteTitle, { color: textColor }]} numberOfLines={1}>
+              {item.title}
+            </Text>
+            <Text style={[styles.noteContent, { color: subtextColor }]} numberOfLines={2}>
+              {item.content.replace(/<[^>]*>/g, '') || 'Sin contenido adicional...'}
+            </Text>
+            <Text style={[styles.noteDate, { color: subtextColor }]}>
+              {new Date(item.date).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })},{' '}
+              {new Date(item.date).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
+            </Text>
           </View>
-          <Text style={[styles.noteTitle, { color: textColor }]} numberOfLines={1}>
-            {item.title}
-          </Text>
-          <Text style={[styles.noteContent, { color: subtextColor }]} numberOfLines={2}>
-            {item.content.replace(/<[^>]*>/g, '') || 'Sin contenido adicional...'}
-          </Text>
-          <Text style={[styles.noteDate, { color: subtextColor }]}>
-            {new Date(item.date).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })},{' '}
-            {new Date(item.date).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
-          </Text>
+          <TouchableOpacity style={styles.menuButton} onPress={() => setMenuVisibleForNoteId(item.id)}>
+            <FontAwesome name="ellipsis-v" size={16} color={subtextColor} />
+          </TouchableOpacity>
         </View>
-        <TouchableOpacity style={styles.menuButton} onPress={() => setMenuVisibleForNoteId(item.id)}>
-          <FontAwesome name="ellipsis-v" size={16} color={subtextColor} />
-        </TouchableOpacity>
-      </View>
-    </TouchableOpacity>
-  );
+      </TouchableOpacity>
+    );
+  };
 
   const renderSectionHeader = ({ section: { title } }: { section: { title: string } }) => (
     <Text style={[styles.sectionHeader, { color: sectionHeaderColor }]}>
@@ -386,6 +396,7 @@ const styles = StyleSheet.create({
   },
   tagContainer: {
     backgroundColor: '#1e40af80',
+    borderWidth: 1,
     paddingHorizontal: 10,
     paddingVertical: 3,
     borderRadius: 6,

@@ -33,6 +33,7 @@
     "@tiptap/react": "^3.18.0",
     "@tiptap/starter-kit": "^3.18.0",
     "@tiptap/suggestion": "^3.18.0",
+    "@vercel/analytics": "^1.6.1",
     "better-sqlite3": "^12.6.2",
     "dompurify": "^3.3.1",
     "drizzle-orm": "^0.45.1",

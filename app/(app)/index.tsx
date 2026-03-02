@@ -13,7 +13,7 @@ export default function Index() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: isDark ? 'black' : '#ffffff' }}>
       <View style={{ flex: 1, paddingBottom: 100 }}>
-        <HomeView 
+        <HomeView
           onNavigateToList={() => router.push('/listview')}
           onNavigateToNew={() => router.push('/menu')}
           onNavigateToLogin={() => router.push('/login')}

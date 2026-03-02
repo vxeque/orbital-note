@@ -1,5 +1,5 @@
 // components/EditorView.tsx
-import React, { useEffect, useState, useReducer, useCallback, useRef } from "react";
+import React, { useEffect, useState, useReducer, useCallback, useRef, useMemo } from "react";
 import {
   View,
   TextInput,
@@ -10,6 +10,7 @@ import {
   Platform,
   Pressable,
   useWindowDimensions,
+  Modal,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { FontAwesome } from "@expo/vector-icons";
@@ -27,8 +28,12 @@ import { MentionSuggestions } from "@/components/MentionSuggestions";
 import { MentionNavigationButtons } from "@/components/MentionNavigationButtons";
 import WebEditor from "@/components/WebEditor";
 import WebToolbar from "@/components/WebToolbar";
+import { getTagBadgeStyle, getTagColor } from "@/utils/tagColors";
 
 const isWeb = Platform.OS === "web";
+const DEFAULT_TAGS = ["Personal", "Trabajo", "Estudio", "Ideas", "Importante"];
+const TAGS_STORAGE_KEY = "orbital-tags";
+const NOTES_STORAGE_KEY = "orbital-notes";
 
 interface EditorViewProps {
   onSave?: (note: Partial<Note>) => void;
@@ -89,12 +94,55 @@ const EditorView: React.FC<EditorViewProps> = ({
   const [showAlertNotSaved, setShowAlertNotSaved] = useState(false);
   const [showNotTitleAlert, setShowNotTitleAlert] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [newTagInput, setNewTagInput] = useState("");
+  const [showTagModal, setShowTagModal] = useState(false);
+  const [customTags, setCustomTags] = useState<string[]>([]);
+  const [removedTags, setRemovedTags] = useState<string[]>([]);
 
   const isDarkTheme = isDark ?? true;
   const bgColor = isDarkTheme ? "black" : "#ffffff";
   const textColor = isDarkTheme ? "#ffffff" : "#000000";
   const borderColor = isDarkTheme ? "#333333" : "#e0e0e0";
   const subtextColor = isDarkTheme ? "#999999" : "#666666";
+  const selectedTagStyle = useMemo(() => getTagBadgeStyle(tag), [tag]);
+  const normalizedTag = (value: string) => value.trim().toLowerCase();
+  const readNotesFromStorage = useCallback(async (): Promise<Note[]> => {
+    if (isWeb) {
+      const raw = localStorage.getItem(NOTES_STORAGE_KEY);
+      return raw ? JSON.parse(raw) : [];
+    }
+    const raw = await AsyncStorage.getItem(NOTES_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  }, []);
+  const writeNotesToStorage = useCallback(async (notes: Note[]) => {
+    const raw = JSON.stringify(notes);
+    if (isWeb) {
+      localStorage.setItem(NOTES_STORAGE_KEY, raw);
+      return;
+    }
+    await AsyncStorage.setItem(NOTES_STORAGE_KEY, raw);
+  }, []);
+  const writeTagsToStorage = useCallback(async (tags: string[]) => {
+    const raw = JSON.stringify(tags);
+    if (isWeb) {
+      localStorage.setItem(TAGS_STORAGE_KEY, raw);
+      return;
+    }
+    await AsyncStorage.setItem(TAGS_STORAGE_KEY, raw);
+  }, []);
+  const tagOptions = useMemo(() => {
+    const fromNotes = allNotes
+      .map((note) => (note.tag || "").trim())
+      .filter(
+        (item) =>
+          Boolean(item) &&
+          !removedTags.some((removedTag) => normalizedTag(removedTag) === normalizedTag(item))
+      );
+    const merged = [...DEFAULT_TAGS, ...customTags, ...fromNotes, tag || ""]
+      .map((item) => item.trim())
+      .filter(Boolean);
+    return Array.from(new Set(merged)).sort((a, b) => a.localeCompare(b, "es"));
+  }, [allNotes, customTags, removedTags, tag]);
 
   useEffect(() => {
     if (existingNote) {
@@ -105,6 +153,78 @@ const EditorView: React.FC<EditorViewProps> = ({
       setTag("Personal");
     }
   }, [existingNote?.id]);
+
+  useEffect(() => {
+    const loadCustomTags = async () => {
+      try {
+        if (isWeb) {
+          const raw = localStorage.getItem(TAGS_STORAGE_KEY);
+          const storedTags: string[] = raw ? JSON.parse(raw) : [];
+          setCustomTags(Array.isArray(storedTags) ? storedTags : []);
+          return;
+        }
+
+        const raw = await AsyncStorage.getItem(TAGS_STORAGE_KEY);
+        const storedTags: string[] = raw ? JSON.parse(raw) : [];
+        setCustomTags(Array.isArray(storedTags) ? storedTags : []);
+      } catch {
+        setCustomTags([]);
+      }
+    };
+
+    loadCustomTags();
+  }, []);
+
+  const handleCreateTag = async () => {
+    const cleanTag = newTagInput.trim();
+    if (!cleanTag) return;
+
+    const alreadyExists = tagOptions.some(
+      (item) => normalizedTag(item) === normalizedTag(cleanTag)
+    );
+
+    if (!alreadyExists) {
+      const updatedCustomTags = [...customTags, cleanTag];
+      setCustomTags(updatedCustomTags);
+      await writeTagsToStorage(updatedCustomTags);
+    }
+
+    setRemovedTags((prev) =>
+      prev.filter((item) => normalizedTag(item) !== normalizedTag(cleanTag))
+    );
+    setTag(cleanTag);
+    setNewTagInput("");
+    setShowTagModal(false);
+  };
+
+  const handleDeleteTag = async (tagToDelete: string) => {
+    if (DEFAULT_TAGS.includes(tagToDelete)) return;
+
+    const updatedCustomTags = customTags.filter(
+      (item) => normalizedTag(item) !== normalizedTag(tagToDelete)
+    );
+    setCustomTags(updatedCustomTags);
+    await writeTagsToStorage(updatedCustomTags);
+    setRemovedTags((prev) =>
+      prev.includes(tagToDelete) ? prev : [...prev, tagToDelete]
+    );
+
+    const existingStorageNotes = await readNotesFromStorage();
+    const personalColor = getTagColor("Personal");
+    const migratedNotes = existingStorageNotes.map((note) => {
+      if (normalizedTag(note.tag) !== normalizedTag(tagToDelete)) return note;
+      return {
+        ...note,
+        tag: "Personal",
+        tagColor: personalColor,
+      };
+    });
+    await writeNotesToStorage(migratedNotes);
+
+    if (normalizedTag(tag) === normalizedTag(tagToDelete)) {
+      setTag("Personal");
+    }
+  };
 
   // Detectar menciones mediante inyeccion de JavaScript
   const checkForMentions = useCallback(() => {
@@ -504,6 +624,7 @@ const EditorView: React.FC<EditorViewProps> = ({
         title,
         content: sanitizedContent,
         tag,
+        tagColor: getTagColor(tag),
         date: new Date().toISOString(),
         references: {
           outgoing: [...new Set(outgoingReferences)],
@@ -553,6 +674,7 @@ const EditorView: React.FC<EditorViewProps> = ({
         title,
         content: contentHTML,
         tag,
+        tagColor: getTagColor(tag),
         date: new Date().toISOString(),
         references: {
           outgoing: outgoingReferences,
@@ -595,199 +717,325 @@ const EditorView: React.FC<EditorViewProps> = ({
             ]}
           >
             <View style={[styles.webHeaderSingleRow, isCompactWeb && styles.webHeaderSingleRowCompact]}>
-              <TouchableOpacity style={[styles.backButton, styles.backButtonCompact]} onPress={() => router.push('/listview')}>
-                <FontAwesome name="arrow-left" size={20} color="#3b82f6" />
-              </TouchableOpacity>
-              <View style={styles.styleTag}>
-              <Text
-                style={[styles.headerMainTitle, styles.headerMainTitleCompact, isSmallWeb && styles.headerMainTitleSmall, { color: textColor }]}
-                numberOfLines={1}
-              >
+              <View style={styles.webHeaderLeftActions}>
+                <TouchableOpacity style={[styles.backButton, styles.backButtonCompact]} onPress={() => router.push('/listview')}>
+                  <FontAwesome name="arrow-left" size={20} color="#3b82f6" />
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.webHeaderRightActions}>
+                <View style={[styles.tagQuickActionsWrap, isWeb && styles.tagQuickActionsWrapWeb]}>
+                  <Pressable style={styles.openTagModalButton} onPress={() => setShowTagModal(true)}>
+                    <FontAwesome name="tags" size={14} color="#ffffff" />
+                    <Text style={styles.openTagModalButtonText}>Cambiar tag</Text>
+                  </Pressable>
+                </View>
+
+                <Pressable
+                  onPress={handleSaveWeb}
+                  disabled={isSaving}
+                  style={({ pressed, hovered }) => [
+                    styles.saveButton,
+                    styles.saveButtonPrimary,
+                    styles.saveButtonCompact,
+                    isSaving && { opacity: 0.6 },
+                    (pressed || hovered) && styles.saveButtonPrimaryHover,
+                  ]}
+                >
+                  <Text style={[styles.saveButtonText, styles.saveButtonTextCompact]}>
+                    {isSaving ? "Guardando..." : "Guardar"}
+                  </Text>
+                </Pressable>
+              </View>
+            </View>
+
+            <View pointerEvents="none" style={styles.webHeaderCenterOverlay}>
+              <View style={styles.webHeaderCenterContent}>
+                <View style={styles.styleTag}>
+                  <Text
+                    style={[styles.headerMainTitle, styles.headerMainTitleCompact, isSmallWeb && styles.headerMainTitleSmall, { color: textColor }]}
+                    numberOfLines={1}
+                  >
+                    {existingNote ? "Editar Nota" : "Nueva Nota"}
+                  </Text>
+
+                  <Text
+                    style={[
+                      styles.headerTagBadge,
+                      styles.headerTagBadgeCompact,
+                      {
+                        color: selectedTagStyle.color,
+                        backgroundColor: selectedTagStyle.backgroundColor,
+                        borderColor: selectedTagStyle.borderColor,
+                      },
+                    ]}
+                    numberOfLines={1}
+                  >
+                    {tag} <FontAwesome name="tag" size={12} color={selectedTagStyle.color} />
+                  </Text>
+                </View>
+              </View>
+            </View>
+          </View>
+        ) : (
+          <View style={[styles.header, { backgroundColor: bgColor }]}>
+            <TouchableOpacity style={styles.backButton} onPress={() => router.push('/listview')}>
+              <FontAwesome name="arrow-left" size={22} color="#3b82f6" />
+            </TouchableOpacity>
+            <View style={[styles.headerTitleWrap, styles.headerTitleWrapMobile]}>
+              <Text style={[styles.headerMainTitle, { color: textColor }]} numberOfLines={1}>
                 {existingNote ? "Editar Nota" : "Nueva Nota"}
               </Text>
-              <Text style={[styles.headerTagBadge, styles.headerTagBadgeCompact, { color: textColor }]} numberOfLines={1}>
-                {tag} <FontAwesome name="tag" size={12} color="#ffffff" />
+              <Text
+                style={[
+                  styles.headerTagBadge,
+                  {
+                    color: selectedTagStyle.color,
+                    backgroundColor: selectedTagStyle.backgroundColor,
+                    borderColor: selectedTagStyle.borderColor,
+                  },
+                ]}
+                numberOfLines={1}
+              >
+                {tag} <FontAwesome name="tag" size={12} color={selectedTagStyle.color} />
               </Text>
-
             </View>
+
+            <View>
+              <Pressable
+                onPress={handleSave}
+                disabled={isSaving}
+                style={({ pressed, hovered }) => [
+                  styles.saveButton,
+                  styles.saveButtonPrimary,
+                  isSaving && { opacity: 0.6 },
+                  (pressed || hovered) && styles.saveButtonPrimaryHover,
+                ]}
+              >
+                <Text style={styles.saveButtonText}>{isSaving ? "Guardando..." : "Guardar"}</Text>
+              </Pressable>
+              <View style={[styles.tagQuickActionsWrap, isWeb && styles.tagQuickActionsWrapWeb]}>
+                <Pressable style={styles.openTagModalButton} onPress={() => setShowTagModal(true)}>
+                  <FontAwesome name="tags" size={14} color="#ffffff" />
+                  <Text style={styles.openTagModalButtonText}>Cambiar tag</Text>
+                </Pressable>
+              </View>
+            </View>
+
+          </View>
+        )}
+        {/* modales */}
+        <CustomAlert
+          visible={showAlert}
+          title="Guardado"
+          message="Nota guardada correctamente."
+          onClose={() => setShowAlert(false)}
+        />
+
+        {/* modal para cuando no se guardo */}
+        <CustomAlert
+          visible={showAlertNotSaved}
+          title="Error al guardar"
+          message="No se pudo guardar la nota."
+          onClose={() => setShowAlertNotSaved(false)}
+        />
+
+        <CustomAlert
+          visible={showNotTitleAlert}
+          title="Error al guardar"
+          message="Por favor, introduce un titulo."
+          onClose={() => setShowNotTitleAlert(false)}
+        />
+
+        <Pressable style={[styles.titleInputWrap, isWeb && styles.titleInputWrapWeb]}>
+          {({ hovered }) => (
+            <TextInput
+              style={[
+                styles.titleInput,
+                isCompactWeb && styles.titleInputCompact,
+                { color: textColor },
+                hovered && { borderColor: '#3b82f6', backgroundColor: '#3b83f65e' },
+              ]}
+              placeholder="INTRODUCE UN TITULO"
+              placeholderTextColor={subtextColor}
+              value={title}
+              onChangeText={setTitle}
+            />)}
+        </Pressable>
+
+        {/* modal para las etiquetas */}
+        <Modal
+          visible={showTagModal}
+          animationType="fade"
+          transparent
+          onRequestClose={() => setShowTagModal(false)}
+        >
+          <Pressable style={styles.tagModalOverlay} onPress={() => setShowTagModal(false)}>
             <Pressable
-              onPress={handleSaveWeb}
-              disabled={isSaving}
-              style={({ pressed, hovered }) => [
-                styles.saveButton,
-                styles.saveButtonPrimary,
-                styles.saveButtonCompact,
-                isSaving && { opacity: 0.6 },
-                (pressed || hovered) && styles.saveButtonPrimaryHover,
+              style={[
+                styles.tagModalContainer,
+                { backgroundColor: isDarkTheme ? "#040913" : "#ffffff", borderColor },
+              ]}
+              onPress={() => { }}
+            >
+              <View style={styles.tagModalHeader}>
+                <Text style={[styles.tagModalTitle, { color: textColor }]}>Etiquetas</Text>
+                <Pressable onPress={() => setShowTagModal(false)} style={styles.tagModalClose}>
+                  <FontAwesome name="close" size={16} color={subtextColor} />
+                </Pressable>
+              </View>
+
+              <View style={styles.tagCreatorRow}>
+                <TextInput
+                  style={[styles.tagInput, { color: textColor, borderColor }]}
+                  placeholder="Crear nueva etiqueta"
+                  placeholderTextColor={subtextColor}
+                  value={newTagInput}
+                  onChangeText={setNewTagInput}
+                  onSubmitEditing={handleCreateTag}
+                  returnKeyType="done"
+                />
+                <Pressable onPress={handleCreateTag} style={styles.tagCreateButton}>
+                  <Text style={styles.tagCreateButtonText}>Agregar</Text>
+                </Pressable>
+              </View>
+
+              <ScrollView style={styles.tagModalList} contentContainerStyle={styles.tagModalListContent}>
+                {tagOptions.map((item) => {
+                  const itemStyle = getTagBadgeStyle(item);
+                  const isSelected = item === tag;
+
+                  return (
+                    <View key={item} style={styles.tagOptionRow}>
+                      <Pressable
+                        onPress={() => {
+                          setTag(item);
+                          setShowTagModal(false);
+                        }}
+                        style={[
+                          styles.tagOptionChip,
+                          styles.tagOptionChipGrow,
+                          {
+                            borderColor: itemStyle.borderColor,
+                            backgroundColor: itemStyle.backgroundColor,
+                          },
+                          isSelected && styles.tagOptionChipSelected,
+                        ]}
+                      >
+                        <Text style={[styles.tagOptionChipText, { color: itemStyle.color }]}>
+                          {item}
+                        </Text>
+                      </Pressable>
+
+                      <Pressable
+                        style={styles.tagDeleteButton}
+                        onPress={() => handleDeleteTag(item)}
+                      >
+                        <FontAwesome name="trash" size={14} color="#ef4444" />
+                      </Pressable>
+                    </View>
+                  );
+                })}
+              </ScrollView>
+            </Pressable>
+          </Pressable>
+        </Modal>
+
+        {/* Sugerencias de menciones */}
+        {showMentionSuggestions && mentionSuggestions.length > 0 && (
+          <>
+            <MentionSuggestions
+              notes={mentionSuggestions}
+              selectedIndex={selectedIndex}
+              onSelect={insertMention}
+              onClose={() => setShowMentionSuggestions(false)}
+              isDark={isDarkTheme}
+            />
+
+            <MentionNavigationButtons
+              onMoveUp={moveUp}
+              onMoveDown={moveDown}
+              onSelect={selectCurrent}
+              isDark={isDarkTheme}
+            />
+          </>
+        )}
+
+        {isWeb ? (
+          <ScrollView
+            style={[styles.content, { backgroundColor: bgColor }]}
+            contentContainerStyle={[styles.contentContainer, styles.contentContainerWeb]}
+          >
+            <View
+              style={[
+                styles.editorSurface,
+                styles.editorSurfaceWeb,
+                {
+                  minHeight: 300,
+                  backgroundColor: bgColor,
+                  borderColor: borderColor,
+                },
               ]}
             >
-              <Text style={[styles.saveButtonText, styles.saveButtonTextCompact]}>
-                {isSaving ? "Guardando..." : "Guardar"}
-              </Text>
-            </Pressable>
-          </View>
-          </View>
-      ) : (
-      <View style={[styles.header, { backgroundColor: bgColor }]}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.push('/listview')}>
-          <FontAwesome name="arrow-left" size={22} color="#3b82f6" />
-        </TouchableOpacity>
-        <View style={[styles.headerTitleWrap, styles.headerTitleWrapMobile]}>
-          <Text style={[styles.headerMainTitle, { color: textColor }]} numberOfLines={1}>
-            {existingNote ? "Editar Nota" : "Nueva Nota"}
-          </Text>
-          <Text style={[styles.headerTagBadge, { color: textColor }]} numberOfLines={1}>
-            {tag} <FontAwesome name="tag" size={12} color="#ffffff" />
-          </Text>
-        </View>
-        <Pressable
-          onPress={handleSave}
-          disabled={isSaving}
-          style={({ pressed, hovered }) => [
-            styles.saveButton,
-            styles.saveButtonPrimary,
-            isSaving && { opacity: 0.6 },
-            (pressed || hovered) && styles.saveButtonPrimaryHover,
-          ]}
-        >
-          <Text style={styles.saveButtonText}>{isSaving ? "Guardando..." : "Guardar"}</Text>
-        </Pressable>
-      </View>
-        )}
-      {/* modales */}
-      <CustomAlert
-        visible={showAlert}
-        title="Guardado"
-        message="Nota guardada correctamente."
-        onClose={() => setShowAlert(false)}
-      />
+              <WebEditor
+                initialContent={existingNote?.content || ""}
+                isDark={isDarkTheme}
+                allNotes={allNotes}
+                onContentChange={(html, blocks) => {
+                  setWebContent(html);
+                  setWebBlocks(blocks);
+                }}
+                onMentionQuery={(query, position) => {
+                  const filtered = (query === ''
+                    ? allNotes
+                    : allNotes.filter(note =>
+                      note.title.toLowerCase().includes(query.toLowerCase())
+                    ))
+                    .filter(note => note.id !== existingNote?.id)
+                    .slice(0, 10);
 
-      {/* modal para cuando no se guardo */}
-      <CustomAlert
-        visible={showAlertNotSaved}
-        title="Error al guardar"
-        message="No se pudo guardar la nota."
-        onClose={() => setShowAlertNotSaved(false)}
-      />
-
-      <CustomAlert
-        visible={showNotTitleAlert}
-        title="Error al guardar"
-        message="Por favor, introduce un titulo."
-        onClose={() => setShowNotTitleAlert(false)}
-      />
-
-      <Pressable style={[styles.titleInputWrap, isWeb && styles.titleInputWrapWeb]}>
-        {({ hovered }) => (
-          <TextInput
-            style={[
-              styles.titleInput,
-              isCompactWeb && styles.titleInputCompact,
-              { color: textColor },
-              hovered && { borderColor: '#3b82f6', backgroundColor: '#3b83f65e' },
-            ]}
-            placeholder="INTRODUCE UN TITULO"
-            placeholderTextColor={subtextColor}
-            value={title}
-            onChangeText={setTitle}
-          />)}
-      </Pressable>
-
-      {/* Sugerencias de menciones */}
-      {showMentionSuggestions && mentionSuggestions.length > 0 && (
-        <>
-          <MentionSuggestions
-            notes={mentionSuggestions}
-            selectedIndex={selectedIndex}
-            onSelect={insertMention}
-            onClose={() => setShowMentionSuggestions(false)}
-            isDark={isDarkTheme}
-          />
-
-          <MentionNavigationButtons
-            onMoveUp={moveUp}
-            onMoveDown={moveDown}
-            onSelect={selectCurrent}
-            isDark={isDarkTheme}
-          />
-        </>
-      )}
-
-      {isWeb ? (
-        <ScrollView
-          style={[styles.content, { backgroundColor: bgColor }]}
-          contentContainerStyle={[styles.contentContainer, styles.contentContainerWeb]}
-        >
-          <View
-            style={[
-              styles.editorSurface,
-              styles.editorSurfaceWeb,
-              {
-                minHeight: 300,
-                backgroundColor: bgColor,
-                borderColor: borderColor,
-              },
-            ]}
-          >
-            <WebEditor
-              initialContent={existingNote?.content || ""}
-              isDark={isDarkTheme}
-              allNotes={allNotes}
-              onContentChange={(html, blocks) => {
-                setWebContent(html);
-                setWebBlocks(blocks);
-              }}
-              onMentionQuery={(query, position) => {
-                const filtered = (query === ''
-                  ? allNotes
-                  : allNotes.filter(note =>
-                    note.title.toLowerCase().includes(query.toLowerCase())
-                  ))
-                  .filter(note => note.id !== existingNote?.id)
-                  .slice(0, 10);
-
-                if (filtered.length > 0) {
-                  setMentionSuggestions(filtered);
-                  setShowMentionSuggestions(true);
-                  setMentionTriggerPos(position);
-                  setSelectedIndex(0);
-                } else {
+                  if (filtered.length > 0) {
+                    setMentionSuggestions(filtered);
+                    setShowMentionSuggestions(true);
+                    setMentionTriggerPos(position);
+                    setSelectedIndex(0);
+                  } else {
+                    setShowMentionSuggestions(false);
+                  }
+                }}
+                onMentionClose={() => {
                   setShowMentionSuggestions(false);
-                }
-              }}
-              onMentionClose={() => {
-                setShowMentionSuggestions(false);
-                setMentionTriggerPos(null);
-              }}
-            />
-          </View>
-        </ScrollView>
-      ) : (
-        <ScrollView
-          style={[styles.content, { backgroundColor: bgColor }]}
-          contentContainerStyle={styles.contentContainer}
-          keyboardShouldPersistTaps="handled"
-        >
-          <View style={{
-            minHeight: 100,
-            height: height,
-            backgroundColor: bgColor,
-          }}>
-            <RichText
-              editor={editor}
-              style={{ backgroundColor: 'transparent' }}
-              onMessage={handleMessage}
-            />
-          </View>
-        </ScrollView>
-      )}
+                  setMentionTriggerPos(null);
+                }}
+              />
+            </View>
+          </ScrollView>
+        ) : (
+          <ScrollView
+            style={[styles.content, { backgroundColor: bgColor }]}
+            contentContainerStyle={styles.contentContainer}
+            keyboardShouldPersistTaps="handled"
+          >
+            <View style={{
+              minHeight: 100,
+              height: height,
+              backgroundColor: bgColor,
+            }}>
+              <RichText
+                editor={editor}
+                style={{ backgroundColor: 'transparent' }}
+                onMessage={handleMessage}
+              />
+            </View>
+          </ScrollView>
+        )}
 
-      {isWeb ? (
-        <WebToolbar isDark={isDarkTheme} onSave={handleSaveWeb} />
-      ) : (
-        <TextEditorToolbar editor={editor} isDark={isDarkTheme} />
-      )}
-    </View>
+        {isWeb ? (
+          <WebToolbar isDark={isDarkTheme} onSave={handleSaveWeb} />
+        ) : (
+          <TextEditorToolbar editor={editor} isDark={isDarkTheme} />
+        )}
+      </View>
     </SafeAreaView >
   );
 };
@@ -822,6 +1070,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 0,
     marginTop: 10,
     borderRadius: 14,
+    position: "relative",
   },
   webHeaderTopRow: {
     flexDirection: "row",
@@ -834,6 +1083,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     flexWrap: "nowrap",
     gap: 6,
+    zIndex: 2,
   },
   webHeaderSingleRowCompact: {
     gap: 4,
@@ -841,6 +1091,32 @@ const styles = StyleSheet.create({
   webHeaderCompact: {
     paddingHorizontal: 10,
     paddingVertical: 10,
+  },
+  webHeaderLeftActions: {
+    minWidth: 54,
+    alignItems: "flex-start",
+    justifyContent: "center",
+  },
+  webHeaderRightActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-end",
+    gap: 12,
+    minWidth: 230,
+  },
+  webHeaderCenterOverlay: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 1,
+  },
+  webHeaderCenterContent: {
+    maxWidth: "52%",
+    alignItems: "center",
   },
   headerTitleWrap: {
     flexDirection: "row",
@@ -888,6 +1164,8 @@ const styles = StyleSheet.create({
   },
   headerTagBadge: {
     backgroundColor: "#ab3bf6c2",
+    borderWidth: 1,
+    borderColor: "#ab3bf6",
     borderRadius: 8,
     paddingVertical: 5,
     paddingHorizontal: 10,
@@ -926,7 +1204,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   saveButtonTextCompact: {
-    fontSize: 12,
+    fontSize: 11,
   },
   content: {
     flex: 1,
@@ -946,6 +1224,119 @@ const styles = StyleSheet.create({
   },
   titleInputWrapWeb: {
     marginHorizontal: 0,
+  },
+  tagQuickActionsWrap: {
+    // marginHorizontal: 12,
+  },
+  tagQuickActionsWrapWeb: {
+    marginHorizontal: 0,
+  },
+  openTagModalButton: {
+    backgroundColor: "#1d4ed8",
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 10,
+    alignSelf: "flex-start",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  openTagModalButtonText: {
+    color: "#ffffff",
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  tagModalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.55)",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 16,
+  },
+  tagModalContainer: {
+    width: "100%",
+    maxWidth: 460,
+    borderWidth: 1,
+    borderRadius: 14,
+    padding: 14,
+    gap: 12,
+  },
+  tagModalHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  tagModalTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  tagModalClose: {
+    padding: 6,
+  },
+  tagModalList: {
+    maxHeight: 260,
+  },
+  tagModalListContent: {
+    gap: 8,
+    paddingBottom: 2,
+  },
+  tagOptionRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  tagCreatorRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  tagInput: {
+    flex: 1,
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    fontSize: 13,
+    textTransform: "none",
+  },
+  tagCreateButton: {
+    backgroundColor: "#2563eb",
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
+  tagCreateButtonText: {
+    color: "#ffffff",
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  tagOptionChip: {
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  tagOptionChipGrow: {
+    flex: 1,
+  },
+  tagOptionChipSelected: {
+    // backgroundColor: "#3b82f6",
+    // transform: [{ scale: 1.03 }],
+  },
+  tagDeleteButton: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    borderWidth: 1,
+    borderColor: "#7f1d1d",
+    backgroundColor: "#450a0a",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  tagOptionChipText: {
+    fontSize: 12,
+    fontWeight: "700",
+    textTransform: "uppercase",
   },
   titleInput: {
     fontSize: 20,
