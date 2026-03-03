@@ -1,11 +1,13 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { View, StyleSheet, TouchableOpacity, Text, ScrollView, Platform, Dimensions } from "react-native";
+import { View, StyleSheet, TouchableOpacity, Text, ScrollView, Platform, Dimensions, Alert } from "react-native";
 import { FontAwesome } from "@expo/vector-icons";
 import { Note } from "@/types/types";
 import { RichText, useEditorBridge, TenTapStartKit } from "@10play/tentap-editor";
 import { router, useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import DOMPurify from "dompurify";
+import * as Print from "expo-print";
+import * as Sharing from "expo-sharing";
 import { getTagBadgeStyle } from "@/utils/tagColors";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 
@@ -145,6 +147,145 @@ const Viewnote: React.FC = () => {
   const safeContent = useMemo(() => sanitizeNoteHtml(existingNote?.content || ""), [existingNote?.content]);
   const { height } = Dimensions.get("window");
 
+  const escapeHtml = (value: string) =>
+    value
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+
+  const exportNoteToPdf = async () => {
+    if (!existingNote) return;
+
+    try {
+      const html = `
+        <html>
+          <head>
+            <meta charset="utf-8" />
+            <style>
+              @page { size: auto; margin: 20mm 14mm; }
+              * { box-sizing: border-box; }
+              body {
+                margin: 0;
+                font-family: Arial, sans-serif;
+                color: #111827;
+                background: #ffffff;
+              }
+              .sheet {
+                width: 100%;
+                max-width: 860px;
+              }
+              .title {
+                margin: 0 0 10px;
+                font-size: 22px;
+                font-weight: 800;
+                letter-spacing: 0.2px;
+                text-transform: uppercase;
+                color: #000000;
+                line-height: 1.1;
+              }
+              .meta-row {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                margin-bottom: 12px;
+              }
+              .tag-pill {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 999px;
+                border: 1px solid ${escapeHtml(noteTagStyle.borderColor)};
+                background: ${escapeHtml(noteTagStyle.backgroundColor)};
+                color: ${escapeHtml(noteTagStyle.color)};
+                font-size: 12px;
+                font-weight: 600;
+                padding: 3px 10px;
+                line-height: 1;
+              }
+              .date {
+                font-size: 12px;
+                color: #374151;
+                line-height: 1.2;
+              }
+              .divider {
+                border: 0;
+                border-top: 1px solid #e5e7eb;
+                margin: 0 0 16px;
+              }
+              .content {
+                font-size: 17px;
+                line-height: 1.7;
+                color: #000000;
+                word-wrap: break-word;
+              }
+              .content p {
+                margin: 0 0 14px;
+              }
+              .content p:last-child {
+                margin-bottom: 0;
+              }
+              .note-mention {
+                background-color: #4a9eff33;
+                color: #2563eb;
+                padding: 2px 8px;
+                border-radius: 4px;
+                font-weight: 600;
+              }
+            </style>
+          </head>
+          <body>
+            <main class="sheet">
+              <h1 class="title">${escapeHtml(existingNote.title)}</h1>
+              <div class="meta-row">
+                <span class="tag-pill">${escapeHtml(existingNote.tag || "Sin etiqueta")}</span>
+                <span class="date">${escapeHtml(formatDate(existingNote.date))}</span>
+              </div>
+              <hr class="divider" />
+              <div class="content">${safeContent}</div>
+            </main>
+          </body>
+        </html>
+      `;
+
+      if (Platform.OS === "web") {
+        const printWindow = window.open("", "_blank", "width=900,height=700");
+        if (!printWindow) {
+          Alert.alert("Error", "No se pudo abrir la ventana de impresion.");
+          return;
+        }
+
+        printWindow.document.open();
+        printWindow.document.write(html);
+        printWindow.document.close();
+        printWindow.onload = () => {
+          printWindow.focus();
+          printWindow.print();
+        };
+        return;
+      }
+
+      const { uri } = await Print.printToFileAsync({
+        html,
+        base64: false,
+      });
+
+      const canShare = await Sharing.isAvailableAsync();
+      if (canShare) {
+        await Sharing.shareAsync(uri, {
+          mimeType: "application/pdf",
+          dialogTitle: "Exportar nota a PDF",
+          UTI: "com.adobe.pdf",
+        });
+      } else {
+        Alert.alert("PDF generado", `Archivo creado en:\n${uri}`);
+      }
+    } catch {
+      Alert.alert("Error", "No se pudo exportar la nota a PDF.");
+    }
+  };
+
   const goToNote = (noteId: string) => {
     router.push({
       pathname: "/Viewnote",
@@ -176,6 +317,11 @@ const Viewnote: React.FC = () => {
         <Text style={[styles.headerMainTitle, { color: textColor }]}>Ver Nota</Text>
 
         <View style={styles.headerActions}>
+          <TouchableOpacity style={styles.pdfButton} onPress={exportNoteToPdf}>
+            <FontAwesome name="file-pdf-o" size={18} color="#ef4444" />
+            <Text style={styles.pdfButtonText}>PDF</Text>
+          </TouchableOpacity>
+
           <TouchableOpacity
             style={styles.editButton}
             onPress={() =>
@@ -325,6 +471,17 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
+  },
+  pdfButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    padding: 8,
+  },
+  pdfButtonText: {
+    color: "#ef4444",
+    fontSize: 13,
+    fontWeight: "700",
   },
   editButton: {
     flexDirection: "row",
