@@ -379,6 +379,7 @@ const styles = StyleSheet.create({
     textTransform: 'capitalize',
   },
   noteCard: {
+    borderWidth: 1,
     borderRadius: 12,
     padding: 12,
     marginBottom: 8,

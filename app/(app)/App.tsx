@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from "react";
 import { Animated, Image, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 import { useUser } from "@/context/UserContext";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 
 const isWeb = Platform.OS === "web";
 
@@ -26,16 +27,22 @@ const COLORS = {
   textSecondary: "#64748b",
 };
 
-const StatusBadge = () => (
-  <View style={styles.badge}>
-    <Text style={styles.badgeText}>ORBITAL NOTE READY</Text>
+const StatusBadge = ({ isDark }: { isDark: boolean }) => (
+  <View style={[styles.badge, { borderColor: isDark ? "#1a3a1a" : "#bbf7d0" }]}>
+    <Text style={[styles.badgeText, { color: isDark ? "#22c55e" : "#15803d" }]}>ORBITAL NOTE READY</Text>
   </View>
 );
 
-const HomeView: React.FC<HomeViewProps> = ({ onNavigateToLogin, isDark = true, userEmail = "" }) => {
+const HomeView: React.FC<HomeViewProps> = ({ onNavigateToLogin, isDark: isDarkProp, userEmail = "" }) => {
+  const colorScheme = useColorScheme();
+  const isDark = isDarkProp ?? colorScheme === "dark";
   const { user } = useUser();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(24)).current;
+  const textColor = isDark ? COLORS.textPrimary : "#0f172a";
+  const subTextColor = isDark ? COLORS.textSecondary : "#475569";
+  const borderColor = isDark ? COLORS.border : "#e2e8f0";
+  const avatarBg = isDark ? "#141720" : "#e2e8f0";
 
   useEffect(() => {
     Animated.parallel([
@@ -46,31 +53,31 @@ const HomeView: React.FC<HomeViewProps> = ({ onNavigateToLogin, isDark = true, u
 
   return (
     <View style={[styles.root, { backgroundColor: isDark ? COLORS.bg : "#ffffff" }]}>
-      <View style={styles.header}>
+      <View style={[styles.header, { borderBottomColor: borderColor }]}>
         <View />
         <TouchableOpacity style={styles.userChip} onPress={onNavigateToLogin} activeOpacity={0.8}>
           <View style={styles.userTextWrap}>
-            <Text style={styles.userNameText}>{user?.name || "Usuario"}</Text>
+            <Text style={[styles.userNameText, { color: textColor }]}>{user?.name || "Usuario"}</Text>
             {!!userEmail && (
-              <Text style={styles.userEmailText} numberOfLines={1}>
+              <Text style={[styles.userEmailText, { color: subTextColor }]} numberOfLines={1}>
                 {userEmail}
               </Text>
             )}
           </View>
-          <Image source={{ uri: user?.picture }} style={styles.avatar} />
+          <Image source={{ uri: user?.picture }} style={[styles.avatar, { backgroundColor: avatarBg }]} />
         </TouchableOpacity>
       </View>
 
       <ScrollView style={styles.scroll} contentContainerStyle={[styles.scrollContent, isWeb && styles.scrollContentWeb]}>
         <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
-          <StatusBadge />
+          <StatusBadge isDark={isDark} />
           <View style={styles.greetingWrap}>
-            <Text style={styles.greeting}>
+            <Text style={[styles.greeting, { color: textColor }]}>
               {"Hola, "}
               <Text style={styles.greetingName}>{user?.name || "amigo"}</Text>
               {"!"}
             </Text>
-            <Text style={styles.greetingSub}>Que escribiremos hoy?</Text>
+            <Text style={[styles.greetingSub, { color: subTextColor }]}>Que escribiremos hoy?</Text>
           </View>
         </Animated.View>
       </ScrollView>
@@ -89,7 +96,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 16,
     paddingBottom: 8,
-    borderBottomColor: COLORS.border,
+    // borderBottomWidth: 1,
   },
   userChip: {
     flexDirection: "row",
@@ -115,7 +122,6 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderWidth: 2,
     borderColor: COLORS.accent,
-    backgroundColor: "#141720",
   },
   scroll: {
     flex: 1,
@@ -134,7 +140,6 @@ const styles = StyleSheet.create({
   },
   badge: {
     borderWidth: 1,
-    borderColor: "#1a3a1a",
     paddingHorizontal: 14,
     paddingVertical: 6,
     borderRadius: 20,
@@ -142,7 +147,6 @@ const styles = StyleSheet.create({
     marginBottom: 28,
   },
   badgeText: {
-    color: "#22c55e",
     fontSize: 11,
     fontWeight: "700",
     letterSpacing: 1.2,

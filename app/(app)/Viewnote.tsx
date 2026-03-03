@@ -7,17 +7,15 @@ import { router, useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import DOMPurify from "dompurify";
 import { getTagBadgeStyle } from "@/utils/tagColors";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 
 const isWeb = Platform.OS === "web";
 const FAVORITE_TAGS = ["favorita", "favoritas", "favorite", "favorites", "favourite", "favourites"];
 const ARCHIVED_TAGS = ["archivo", "archivada", "archivadas", "archivado", "archivados", "archive", "archived"];
 
-interface NoteViewerViewProps {
-  onBack?: () => void;
-  isDark?: boolean;
-}
-
-const Viewnote: React.FC<NoteViewerViewProps> = ({ isDark = true }) => {
+const Viewnote: React.FC = () => {
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === "dark";
   const { existingNoteId: existingNoteIdParam, allNotesData } = useLocalSearchParams();
   const parsedNotes = allNotesData ? JSON.parse(allNotesData as string) : [];
   const allNotes: Note[] = parsedNotes;
@@ -28,7 +26,7 @@ const Viewnote: React.FC<NoteViewerViewProps> = ({ isDark = true }) => {
   const [editorHeight, setEditorHeight] = useState(100);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  const isDarkTheme = isDark ?? true;
+  const isDarkTheme = isDark;
   const bgColor = isDarkTheme ? "black" : "#ffffff";
   const textColor = isDarkTheme ? "#ffffff" : "#000000";
   const borderColor = isDarkTheme ? "#333333" : "#e0e0e0";

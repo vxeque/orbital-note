@@ -5,10 +5,11 @@ import {
   Platform,
   StyleSheet,
   TouchableOpacity,
-  useColorScheme
 } from "react-native";
 import Animated, { FadeInDown, ZoomIn } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTheme } from "@/hooks/use-theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 
 export default function FloatingNavBar() {
   const router = useRouter();
@@ -16,8 +17,9 @@ export default function FloatingNavBar() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
   const insets = useSafeAreaInsets();
+  const { setTheme } = useTheme();
 
-  if (pathname === '/editorview') {
+  if (pathname === "/editorview") {
     return null;
   }
 
@@ -81,7 +83,26 @@ export default function FloatingNavBar() {
         );
       })}
 
-      {/* <View style={styles.divider} /> */}
+      <Animated.View entering={ZoomIn.delay(760).duration(400)}>
+        <TouchableOpacity
+          style={[
+            styles.navItem,
+            {
+              backgroundColor: isDark
+                ? "rgba(255,255,255,0.12)"
+                : "rgba(255,255,255,0.75)",
+            },
+          ]}
+          onPress={() => setTheme(isDark ? "light" : "dark")}
+          accessibilityLabel="Cambiar tema"
+        >
+          <FontAwesome
+            name={isDark ? "sun-o" : "moon-o"}
+            size={22}
+            color={isDark ? "#f59e0b" : "#334155"}
+          />
+        </TouchableOpacity>
+      </Animated.View>
     </Animated.View>
   );
 }
@@ -100,7 +121,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     shadowColor: "#111827",
     shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: .18,
+    shadowOpacity: 0.18,
     shadowRadius: 24,
     elevation: 12,
   },

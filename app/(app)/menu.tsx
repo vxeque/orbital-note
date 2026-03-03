@@ -1,9 +1,10 @@
 import { FontAwesome } from '@expo/vector-icons';
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, useColorScheme, View, } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View, } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 
-export default function menu() {
+export default function Menu() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
 

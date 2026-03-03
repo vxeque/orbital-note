@@ -3,10 +3,10 @@ import { useTheme } from './use-theme';
 
 export function useColorScheme() {
   const systemColorScheme = useRNColorScheme();
-  const { theme, isDark, isLoading } = useTheme();
+  const { theme, isDark, isLoadingTheme } = useTheme();
 
   // Durante la carga, usar dark por defecto para evitar cambios visuales bruscos
-  if (isLoading) {
+  if (isLoadingTheme) {
     return 'dark';
   }
 

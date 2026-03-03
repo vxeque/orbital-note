@@ -29,6 +29,7 @@ import { MentionNavigationButtons } from "@/components/MentionNavigationButtons"
 import WebEditor from "@/components/WebEditor";
 import WebToolbar from "@/components/WebToolbar";
 import { getTagBadgeStyle, getTagColor } from "@/utils/tagColors";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 
 const isWeb = Platform.OS === "web";
 const DEFAULT_TAGS = ["Personal", "Trabajo", "Estudio", "Ideas", "Importante"];
@@ -38,14 +39,13 @@ const NOTES_STORAGE_KEY = "orbital-notes";
 interface EditorViewProps {
   onSave?: (note: Partial<Note>) => void;
   onBack?: () => void;
-  isDark?: boolean;
 }
 
 const EditorView: React.FC<EditorViewProps> = ({
   onSave,
   onBack,
-  isDark = true,
 }) => {
+  const colorScheme = useColorScheme();
   const { existingNoteId: existingNoteIdParam, allNotesData } = useLocalSearchParams();
   const normalizedExistingNoteId = Array.isArray(existingNoteIdParam)
     ? existingNoteIdParam[0]
@@ -99,7 +99,7 @@ const EditorView: React.FC<EditorViewProps> = ({
   const [customTags, setCustomTags] = useState<string[]>([]);
   const [removedTags, setRemovedTags] = useState<string[]>([]);
 
-  const isDarkTheme = isDark ?? true;
+  const isDarkTheme = colorScheme === "dark";
   const bgColor = isDarkTheme ? "black" : "#ffffff";
   const textColor = isDarkTheme ? "#ffffff" : "#000000";
   const borderColor = isDarkTheme ? "#333333" : "#e0e0e0";
@@ -453,11 +453,11 @@ const EditorView: React.FC<EditorViewProps> = ({
         body, .ProseMirror {
           margin: 0;
           padding: 0;
-          color: #fff;
+          color: ${textColor};
           font-size: 12px;
           font-family: Arial;
           line-height: 1.5;
-          background-color: yellow;
+          background-color: ${bgColor};
         }
 
         /* Estilos para menciones de notas */
@@ -484,7 +484,7 @@ const EditorView: React.FC<EditorViewProps> = ({
           padding-left: 16px;
           margin-left: 0;
           margin-right: 0;
-          color: #fff;
+          color: ${textColor};
           font-style: italic;
           opacity: 0.9;
         }
@@ -497,7 +497,7 @@ const EditorView: React.FC<EditorViewProps> = ({
         }
         
         .ProseMirror ul li {
-          color: #fff;
+          color: ${textColor};
           margin: 6px 0;
           padding-left: 8px;
         }
@@ -514,7 +514,7 @@ const EditorView: React.FC<EditorViewProps> = ({
         }
         
         .ProseMirror ol li {
-          color: #fff;
+          color: ${textColor};
           margin: 6px 0;
           padding-left: 8px;
         }
@@ -525,7 +525,7 @@ const EditorView: React.FC<EditorViewProps> = ({
         }
 
         .ProseMirror p.is-empty::before {
-          color: #666;
+          color: ${subtextColor};
           content: attr(data-placeholder);
           float: left;
           height: 0;
@@ -533,7 +533,7 @@ const EditorView: React.FC<EditorViewProps> = ({
         }
       `);
     }
-  }, [editor]);
+  }, [editor, bgColor, subtextColor, textColor]);
 
   const sanitizeNoteHtml = (html: string): string => {
     let safe = html ?? "";
