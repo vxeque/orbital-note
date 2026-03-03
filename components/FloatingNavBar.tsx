@@ -110,7 +110,7 @@ export default function FloatingNavBar() {
 const styles = StyleSheet.create({
   container: {
     position: "absolute",
-    borderRadius: 22,
+    borderRadius: 15,
     flexDirection: "row",
     justifyContent: "space-evenly",
     width: "88%",
