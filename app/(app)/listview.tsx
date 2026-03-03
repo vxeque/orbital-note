@@ -79,8 +79,8 @@ export default function ListViewScreen() {
         return;
       }
 
-      const prevTime = new Date(prev.date).getTime() || 0;
-      const nexTime = new Date(note.date).getTime() || 0;
+      const prevTime = new Date(prev.modifiedAt || prev.date).getTime() || 0;
+      const nexTime = new Date(note.modifiedAt || note.date).getTime() || 0;
       map.set(note.id, nexTime >= prevTime ? note : prev);
     });
     return Array.from(map.values());
@@ -211,9 +211,15 @@ export default function ListViewScreen() {
               {item.content.replace(/<[^>]*>/g, '') || 'Sin contenido adicional...'}
             </Text>
             <Text style={[styles.noteDate, { color: subtextColor }]}>
-              {new Date(item.date).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })},{' '}
+              Creada: {new Date(item.date).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })},{' '}
               {new Date(item.date).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
             </Text>
+            {item.modifiedAt ? (
+              <Text style={[styles.noteDate, { color: subtextColor }]}>
+                Modificada: {new Date(item.modifiedAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })},{' '}
+                {new Date(item.modifiedAt).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
+              </Text>
+            ) : null}
           </View>
           <TouchableOpacity style={styles.menuButton} onPress={() => setMenuVisibleForNoteId(item.id)}>
             <FontAwesome name="ellipsis-v" size={16} color={subtextColor} />

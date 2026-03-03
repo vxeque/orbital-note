@@ -16,6 +16,7 @@ export interface Note {
   tag: string;
   tagColor?: string;
   date: string;
+  modifiedAt?: string;
   references?: {
     outgoing: string[]; // IDs de notas que esta nota menciona
     incoming: string[]; // IDs de notas que mencionan esta nota

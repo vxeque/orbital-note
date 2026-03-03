@@ -144,6 +144,18 @@ const Viewnote: React.FC = () => {
     });
   };
 
+  const formatDateTime = (dateStr?: string) => {
+    if (!dateStr) return "";
+    const d = new Date(dateStr);
+    return d.toLocaleString("es-ES", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
   const safeContent = useMemo(() => sanitizeNoteHtml(existingNote?.content || ""), [existingNote?.content]);
   const { height } = Dimensions.get("window");
 
@@ -240,7 +252,8 @@ const Viewnote: React.FC = () => {
               <h1 class="title">${escapeHtml(existingNote.title)}</h1>
               <div class="meta-row">
                 <span class="tag-pill">${escapeHtml(existingNote.tag || "Sin etiqueta")}</span>
-                <span class="date">${escapeHtml(formatDate(existingNote.date))}</span>
+                <span class="date">Creada: ${escapeHtml(formatDate(existingNote.date))}</span>
+                ${existingNote.modifiedAt ? `<span class="date">Modificada: ${escapeHtml(formatDateTime(existingNote.modifiedAt))}</span>` : ""}
               </div>
               <hr class="divider" />
               <div class="content">${safeContent}</div>
@@ -359,7 +372,14 @@ const Viewnote: React.FC = () => {
             >
               <Text style={[styles.tagText, { color: noteTagStyle.color }]}>{existingNote.tag}</Text>
             </View>
-            <Text style={[styles.dateText, { color: subtextColor }]}>{formatDate(existingNote.date)}</Text>
+            <View style={styles.metaDates}>
+              <Text style={[styles.dateText, { color: subtextColor }]}>Creada: {formatDate(existingNote.date)}</Text>
+              {existingNote.modifiedAt ? (
+                <Text style={[styles.dateText, { color: subtextColor }]}>
+                  Modificada: {formatDateTime(existingNote.modifiedAt)}
+                </Text>
+              ) : null}
+            </View>
           </View>
 
           <View style={[styles.divider, { backgroundColor: borderColor }]} />
@@ -512,10 +532,15 @@ const styles = StyleSheet.create({
   },
   metaRow: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     gap: 12,
     marginHorizontal: 8,
     marginBottom: 12,
+  },
+  metaDates: {
+    flexDirection: "column",
+    gap: 2,
+    flex: 1,
   },
   tagBadge: {
     paddingHorizontal: 10,

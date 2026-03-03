@@ -644,18 +644,27 @@ const EditorView: React.FC<EditorViewProps> = ({
           tag,
           content: contentHTML,
         });
-        if (source === "auto" && snapshotKey === lastSavedSnapshotRef.current) {
+        if (snapshotKey === lastSavedSnapshotRef.current) {
+          if (source === "manual") {
+            setShowAlert(true);
+          }
           return true;
         }
 
+        const nowIso = new Date().toISOString();
         const noteId = normalizedExistingNoteId || existingNote?.id || Date.now().toString();
+        const existingNotes = await readNotesFromStorage();
+        const persistedNote = existingNotes.find((n) => n.id === noteId);
+        const isEditingExistingNote = Boolean(persistedNote || existingNote);
+        const originalDate = persistedNote?.date || existingNote?.date || nowIso;
         const newNote: Note = {
           id: noteId,
           title: cleanTitle,
           content: contentHTML,
           tag,
           tagColor: getTagColor(tag),
-          date: new Date().toISOString(),
+          date: originalDate,
+          modifiedAt: isEditingExistingNote ? nowIso : undefined,
           references: {
             outgoing: extractReferences(contentHTML),
             incoming: existingNote?.references?.incoming || [],
@@ -663,9 +672,13 @@ const EditorView: React.FC<EditorViewProps> = ({
           blocks,
         };
 
-        const existingNotes = await readNotesFromStorage();
-        const updatedNotes = existingNotes.filter((n) => n.id !== noteId);
-        updatedNotes.push(newNote);
+        const existingIndex = existingNotes.findIndex((n) => n.id === noteId);
+        const updatedNotes = [...existingNotes];
+        if (existingIndex >= 0) {
+          updatedNotes[existingIndex] = newNote;
+        } else {
+          updatedNotes.push(newNote);
+        }
         await writeNotesToStorage(updatedNotes);
 
         lastSavedSnapshotRef.current = snapshotKey;
