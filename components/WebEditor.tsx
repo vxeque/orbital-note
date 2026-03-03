@@ -13,6 +13,8 @@ interface WebEditorProps {
   initialContent: string;
   isDark: boolean;
   allNotes: Note[];
+  mentionToInsert?: Note | null;
+  onMentionInserted?: () => void;
   onContentChange?: (html: string, blocks: Block[]) => void;
   onMentionQuery?: (query: string, position: number) => void;
   onMentionClose?: () => void;
@@ -22,6 +24,8 @@ const WebEditor: React.FC<WebEditorProps> = ({
   initialContent,
   isDark,
   allNotes,
+  mentionToInsert,
+  onMentionInserted,
   onContentChange,
   onMentionQuery,
   onMentionClose,
@@ -121,6 +125,54 @@ const WebEditor: React.FC<WebEditorProps> = ({
       (window as any).tiptapEditor = editor;
     }
   }, [editor]);
+
+  useEffect(() => {
+    if (!editor || !mentionToInsert) return;
+
+    const { state } = editor;
+    const { from } = state.selection;
+    const textBeforeCursor = state.doc.textBetween(0, from, " ");
+    const lastAtIndex = textBeforeCursor.lastIndexOf("@");
+
+    if (lastAtIndex === -1) {
+      onMentionInserted?.();
+      return;
+    }
+
+    const query = textBeforeCursor.substring(lastAtIndex + 1);
+    if (query.includes(" ") || query.includes("\n")) {
+      onMentionInserted?.();
+      return;
+    }
+
+    const replaceFrom = from - (query.length + 1);
+    const replaceTo = from;
+    editor
+      .chain()
+      .focus()
+      .setTextSelection({ from: replaceFrom, to: replaceTo })
+      .insertContent([
+        {
+          type: "text",
+          text: `@${mentionToInsert.title}`,
+          marks: [
+            {
+              type: "link",
+              attrs: {
+                href: `note://${mentionToInsert.id}`,
+              },
+            },
+          ],
+        },
+        {
+          type: "text",
+          text: " ",
+        },
+      ])
+      .run();
+
+    onMentionInserted?.();
+  }, [editor, mentionToInsert, onMentionInserted]);
 
   const extractBlocks = (html: string): Block[] => {
     const regex = /<([^>]+) data-block-id="([^"]+)"[^>]*>(.*?)<\/\1>/g;
@@ -223,6 +275,15 @@ const WebEditor: React.FC<WebEditorProps> = ({
         .web-editor-content a {
 
           text-decoration: underline;
+        }
+
+        .web-editor-content a[href^="note://"] {
+          background-color: #4a9eff33;
+          color: #4a9eff;
+          padding: 2px 6px;
+          border-radius: 4px;
+          text-decoration: none;
+          font-weight: 500;
         }
         
         .web-editor-content img {

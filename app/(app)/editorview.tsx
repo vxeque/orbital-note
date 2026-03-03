@@ -76,6 +76,7 @@ const EditorView: React.FC<EditorViewProps> = ({
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [mentionTriggerPos, setMentionTriggerPos] = useState<number | null>(null);
   const [currentQuery, setCurrentQuery] = useState("");
+  const [webMentionToInsert, setWebMentionToInsert] = useState<Note | null>(null);
 
   // Estado para el editor web
   const [webContent, setWebContent] = useState(existingNote?.content || "");
@@ -296,6 +297,14 @@ const EditorView: React.FC<EditorViewProps> = ({
 
   // Insertar mencion usando inyeccion de JavaScript
   const insertMention = useCallback(async (note: Note) => {
+    if (isWeb) {
+      setWebMentionToInsert(note);
+      setShowMentionSuggestions(false);
+      setMentionTriggerPos(null);
+      setCurrentQuery("");
+      return;
+    }
+
     if (!editor?.webviewRef?.current || mentionTriggerPos === null) return;
 
     const script = `
@@ -571,11 +580,18 @@ const EditorView: React.FC<EditorViewProps> = ({
   };
 
   const extractReferences = (html: string): string[] => {
-    const regex = /data-note-id="([^"]+)"/g;
+    const spanRegex = /data-note-id="([^"]+)"/g;
+    const linkRegex = /href="note:\/\/([^"]+)"/g;
     const references: string[] = [];
     let match;
 
-    while ((match = regex.exec(html)) !== null) {
+    while ((match = spanRegex.exec(html)) !== null) {
+      if (match[1] && match[1] !== existingNote?.id) {
+        references.push(match[1]);
+      }
+    }
+
+    while ((match = linkRegex.exec(html)) !== null) {
       if (match[1] && match[1] !== existingNote?.id) {
         references.push(match[1]);
       }
@@ -1058,6 +1074,8 @@ const EditorView: React.FC<EditorViewProps> = ({
                 initialContent={existingNote?.content || ""}
                 isDark={isDarkTheme}
                 allNotes={allNotes}
+                mentionToInsert={webMentionToInsert}
+                onMentionInserted={() => setWebMentionToInsert(null)}
                 onContentChange={(html, blocks) => {
                   setWebContent(html);
                   setWebBlocks(blocks);
