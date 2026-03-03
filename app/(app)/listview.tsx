@@ -1,6 +1,6 @@
 import { FontAwesome } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, { use, useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
@@ -27,19 +27,18 @@ import SaveToDriveModal from '@/components/modal/saveNote/saveNote';
 // descargar archivos de google drive 
 import { descargarDesdeDrive } from '@/services/sincronizarWithDrive';
 
-const MOCK_NOTES: Note[] = [];
-
 export default function ListViewScreen() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const [notes, setNotes] = useState<Note[]>([]);
   const [menuVisibleForNoteId, setMenuVisibleForNoteId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const router = useRouter();
 
   const isWeb = Platform.OS === 'web';
 
   // contexto del usuario 
-  const { user, isLoading, clearUser } = useUser()
+  const { user } = useUser()
 
   const bgColor = isDark ? 'black' : '#ffffff';
   const cardBgColor = isDark ? '#1b1a1ad0' : '#ffffff';
@@ -47,6 +46,7 @@ export default function ListViewScreen() {
   const subtextColor = isDark ? '#888888' : '#666666';
   const borderColor = isDark ? '#2a2a2a' : '#e0e0e0';
   const sectionHeaderColor = isDark ? '#ffffff' : '#000000';
+  const normalizedSearchQuery = searchQuery.trim();
 
   const STORAGE_KEY = 'orbital-notes';
   const readNotes = async (): Promise<Note[]> => {
@@ -113,10 +113,54 @@ export default function ListViewScreen() {
     return () => { cancelled = true; };
   }, []);
 
+  const normalizeText = (value: string) =>
+    value
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .trim();
+
+  const stripHtml = (value: string) => value.replace(/<[^>]*>/g, ' ');
+
+  const formatSearchDate = (dateStr?: string) => {
+    if (!dateStr) return '';
+    const parsed = new Date(dateStr);
+    if (Number.isNaN(parsed.getTime())) return '';
+    return parsed.toLocaleString('es-ES', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
+  const filteredNotes = useMemo(() => {
+    const query = normalizeText(normalizedSearchQuery);
+    if (!query) return notes;
+
+    const terms = query.split(/\s+/).filter(Boolean);
+    if (terms.length === 0) return notes;
+
+    return notes.filter((note) => {
+      const searchableText = normalizeText(
+        [
+          note.title || '',
+          note.tag || '',
+          stripHtml(note.content || ''),
+          formatSearchDate(note.date),
+          formatSearchDate(note.modifiedAt),
+        ].join(' ')
+      );
+
+      return terms.every((term) => searchableText.includes(term));
+    });
+  }, [notes, normalizedSearchQuery]);
+
   const groupedNotes = useMemo(() => {
     const groups: Record<string, { title: string; data: Note[] }> = {};
 
-    notes.forEach(note => {
+    filteredNotes.forEach(note => {
       const date = new Date(note.date);
       if (isNaN(date.getTime())) return;
 
@@ -140,7 +184,7 @@ export default function ListViewScreen() {
         const dateB = new Date(b.data[0]?.date || '1900-01-01');
         return dateA.getTime() - dateB.getTime();
       });
-  }, [notes]);
+  }, [filteredNotes]);
 
   const handleDeleteNote = async (noteId: string) => {
     try {
@@ -263,7 +307,21 @@ export default function ListViewScreen() {
             style={[styles.searchInput, { color: textColor }]}
             placeholder="Buscar nota"
             placeholderTextColor={subtextColor}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            autoCorrect={false}
+            autoCapitalize="none"
+            returnKeyType="search"
           />
+          {normalizedSearchQuery ? (
+            <TouchableOpacity
+              onPress={() => setSearchQuery('')}
+              style={styles.clearSearchButton}
+              accessibilityLabel="Limpiar busqueda"
+            >
+              <FontAwesome name="times-circle" size={16} color={subtextColor} />
+            </TouchableOpacity>
+          ) : null}
         </View>
       </View>
 
@@ -278,7 +336,7 @@ export default function ListViewScreen() {
       />
 
       {/* Lista scrolleable — ocupa todo el espacio restante */}
-      {notes.length > 0 ? (
+      {groupedNotes.length > 0 ? (
         <SectionList
           sections={groupedNotes}
           keyExtractor={(item) => item.id}
@@ -293,9 +351,13 @@ export default function ListViewScreen() {
         />
       ) : (
         <View style={styles.emptyContainer}>
-          <Text style={[styles.emptyText, { color: textColor }]}>No hay notas disponibles</Text>
+          <Text style={[styles.emptyText, { color: textColor }]}>
+            {normalizedSearchQuery ? 'No se encontraron notas' : 'No hay notas disponibles'}
+          </Text>
           <Text style={[styles.emptySubtext, { color: subtextColor }]}>
-            Crea nuevas notas para verlas aquí.
+            {normalizedSearchQuery
+              ? `Prueba con otro termino para "${searchQuery}".`
+              : 'Crea nuevas notas para verlas aqui.'}
           </Text>
         </View>
       )}
@@ -367,6 +429,10 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 14,
     padding: 0,
+  },
+  clearSearchButton: {
+    paddingLeft: 10,
+    paddingVertical: 4,
   },
   listContainer: {
     flex: 1,
