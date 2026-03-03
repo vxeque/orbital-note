@@ -2,10 +2,10 @@ import { FontAwesome } from "@expo/vector-icons";
 import { usePathname, useRouter } from "expo-router";
 import React from "react";
 import {
+  Platform,
   StyleSheet,
   TouchableOpacity,
-  useColorScheme,
-  View,
+  useColorScheme
 } from "react-native";
 import Animated, { FadeInDown, ZoomIn } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -22,13 +22,13 @@ export default function FloatingNavBar() {
   }
 
   const isActive = (route: string) => {
-    return pathname === `/${route}` || (route === "index" && pathname === "/");
+    return pathname === route || (route === "/App" && pathname === "/");
   };
 
   const navItems = [
-    { route: "index", icon: "home" },
-    { route: "editorview", icon: "plus-circle" },
-    { route: "listview", icon: "archive" },
+    { route: "/App" as const, icon: "home" },
+    { route: "/editorview" as const, icon: "plus-circle" },
+    { route: "/listview" as const, icon: "archive" },
     // { route: 'menu', icon: 'bars' },
   ];
 
@@ -39,8 +39,15 @@ export default function FloatingNavBar() {
         styles.container,
         {
           bottom: insets.bottom + 16,
-          backgroundColor: isDark ? "black" : "#ffffff",
-          borderColor: isDark ? "#222222" : "#e0e0e0",
+          backgroundColor: isDark
+            ? "#101010"
+            : "rgba(248, 248, 250, 0.62)",
+          borderColor: isDark
+            ? "rgba(255, 255, 255, 0.12)"
+            : "rgba(255, 255, 255, 0.65)",
+          ...(Platform.OS === "web"
+            ? ({ backdropFilter: "blur(18px)" } as any)
+            : {}),
         },
       ]}
     >
@@ -55,11 +62,13 @@ export default function FloatingNavBar() {
               style={[
                 styles.navItem,
                 active && {
-                  backgroundColor: isDark ? "black" : "#f0f0f0",
+                  backgroundColor: isDark
+                    ? "rgba(255,255,255,0.12)"
+                    : "rgba(255,255,255,0.75)",
                 },
               ]}
               onPress={() =>
-                router.push(item.route === "index" ? "/" : `/${item.route}`)
+                router.push(item.route)
               }
             >
               <FontAwesome
@@ -79,20 +88,21 @@ export default function FloatingNavBar() {
 
 const styles = StyleSheet.create({
   container: {
-    // position: "fixed",
-    // bottom: 20,
-    // left: 0,
-    // right: 0,
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    zIndex: 1000,
-    borderRadius: 15,
+    position: "absolute",
+    borderRadius: 22,
     flexDirection: "row",
     justifyContent: "space-evenly",
-    // alignItems: "center",
-    // paddingHorizontal: 12,
-    // width: 800
+    width: "88%",
+    maxWidth: 420,
+    alignSelf: "center",
+    paddingVertical: 7,
+    paddingHorizontal: 8,
+    borderWidth: 1,
+    shadowColor: "#111827",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: .18,
+    shadowRadius: 24,
+    elevation: 12,
   },
   navItem: {
     width: 48,
@@ -100,6 +110,7 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     justifyContent: "center",
     alignItems: "center",
+    marginHorizontal: 10,
   },
   divider: {
     width: 1,

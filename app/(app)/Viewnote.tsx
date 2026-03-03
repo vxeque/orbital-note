@@ -1,39 +1,24 @@
-// components/NoteViewerView.tsx
-import React, { useEffect, useState, useMemo } from "react";
-import {
-  View,
-  StyleSheet,
-  TouchableOpacity,
-  Text,
-  ScrollView,
-  Platform,
-} from "react-native";
+import React, { useEffect, useMemo, useState } from "react";
+import { View, StyleSheet, TouchableOpacity, Text, ScrollView, Platform, Dimensions } from "react-native";
 import { FontAwesome } from "@expo/vector-icons";
 import { Note } from "@/types/types";
-import {
-  RichText,
-  useEditorBridge,
-  TenTapStartKit,
-} from "@10play/tentap-editor";
+import { RichText, useEditorBridge, TenTapStartKit } from "@10play/tentap-editor";
 import { router, useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Dimensions } from "react-native";
 import DOMPurify from "dompurify";
 import { getTagBadgeStyle } from "@/utils/tagColors";
 
 const isWeb = Platform.OS === "web";
+const FAVORITE_TAGS = ["favorita", "favoritas", "favorite", "favorites", "favourite", "favourites"];
+const ARCHIVED_TAGS = ["archivo", "archivada", "archivadas", "archivado", "archivados", "archive", "archived"];
 
 interface NoteViewerViewProps {
   onBack?: () => void;
   isDark?: boolean;
 }
 
-const Viewnote: React.FC<NoteViewerViewProps> = ({
-  onBack,
-  isDark = true,
-}) => {
-  const { existingNoteId: existingNoteIdParam, allNotesData } =
-    useLocalSearchParams();
+const Viewnote: React.FC<NoteViewerViewProps> = ({ isDark = true }) => {
+  const { existingNoteId: existingNoteIdParam, allNotesData } = useLocalSearchParams();
   const parsedNotes = allNotesData ? JSON.parse(allNotesData as string) : [];
   const allNotes: Note[] = parsedNotes;
   const existingNote: Note | undefined = existingNoteIdParam
@@ -41,6 +26,7 @@ const Viewnote: React.FC<NoteViewerViewProps> = ({
     : undefined;
 
   const [editorHeight, setEditorHeight] = useState(100);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const isDarkTheme = isDark ?? true;
   const bgColor = isDarkTheme ? "black" : "#ffffff";
@@ -49,7 +35,21 @@ const Viewnote: React.FC<NoteViewerViewProps> = ({
   const subtextColor = isDarkTheme ? "#999999" : "#666666";
   const noteTagStyle = getTagBadgeStyle(existingNote?.tag, existingNote?.tagColor);
 
-  // Editor bridge solo lectura: sin autofocus, sin edición
+  const allNotesDataSerialized = useMemo(() => JSON.stringify(allNotes), [allNotes]);
+  const normalizeTag = (tag?: string) => (tag || "").trim().toLowerCase();
+  const sortedNotes = useMemo(
+    () => [...allNotes].sort((a, b) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime()),
+    [allNotes]
+  );
+  const favoriteNotes = useMemo(
+    () => sortedNotes.filter((note) => FAVORITE_TAGS.includes(normalizeTag(note.tag))),
+    [sortedNotes]
+  );
+  const archivedNotes = useMemo(
+    () => sortedNotes.filter((note) => ARCHIVED_TAGS.includes(normalizeTag(note.tag))),
+    [sortedNotes]
+  );
+
   const mobileEditorBridge = useEditorBridge({
     initialContent: existingNote?.content || "",
     dynamicHeight: true,
@@ -57,17 +57,17 @@ const Viewnote: React.FC<NoteViewerViewProps> = ({
     editable: false,
     bridgeExtensions: TenTapStartKit,
   });
-
   const editor = isWeb ? null : (mobileEditorBridge as any);
 
-  const sanitizeNoteHtml = (html: string) => DOMPurify.sanitize(html, {
-    USE_PROFILES: { html: true },
-    FORBID_TAGS: ["script", "style", "iframe", "object", "embed", "link", "meta"],
-    FORBID_ATTR: ["onerror", "onload", "onclick", "onmouseover", "style"],
-    ALLOWED_URI_REGEXP: /^(?:(?:https?|mailto|tel|data|blob|ftp|file|sms|callto|webcal|irc|news|urn):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,
-  });
+  const sanitizeNoteHtml = (html: string) =>
+    DOMPurify.sanitize(html, {
+      USE_PROFILES: { html: true },
+      FORBID_TAGS: ["script", "style", "iframe", "object", "embed", "link", "meta"],
+      FORBID_ATTR: ["onerror", "onload", "onclick", "onmouseover", "style"],
+      ALLOWED_URI_REGEXP:
+        /^(?:(?:https?|mailto|tel|data|blob|ftp|file|sms|callto|webcal|irc|news|urn):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,
+    });
 
-  // Inyectar CSS para modo lectura
   useEffect(() => {
     if (editor) {
       editor.injectCSS(`
@@ -79,14 +79,12 @@ const Viewnote: React.FC<NoteViewerViewProps> = ({
           font-family: Arial;
           line-height: 1.5;
           background-color: black;
-          /* Deshabilitar selección y cursor de edición */
           user-select: none;
           -webkit-user-select: none;
           pointer-events: none;
           cursor: default;
           caret-color: transparent;
         }
-
         .note-mention {
           background-color: #4a9eff33;
           color: #4a9eff;
@@ -97,7 +95,6 @@ const Viewnote: React.FC<NoteViewerViewProps> = ({
           display: inline-block;
           margin: 0 2px;
         }
-
         .ProseMirror blockquote {
           border-left: 4px solid #4a9eff;
           padding-left: 16px;
@@ -107,7 +104,6 @@ const Viewnote: React.FC<NoteViewerViewProps> = ({
           font-style: italic;
           opacity: 0.9;
         }
-
         .ProseMirror ul {
           padding-left: 24px;
           margin: 12px 0;
@@ -136,8 +132,6 @@ const Viewnote: React.FC<NoteViewerViewProps> = ({
           color: #4a9eff;
           font-weight: bold;
         }
-
-        /* Ocultar cursor y borde de foco del editor */
         .ProseMirror:focus {
           outline: none;
           border: none;
@@ -153,7 +147,7 @@ const Viewnote: React.FC<NoteViewerViewProps> = ({
       if (data.type === "height") {
         setEditorHeight(data.value + 20);
       }
-    } catch (_) { }
+    } catch {}
   };
 
   const formatDate = (dateStr?: string) => {
@@ -167,8 +161,67 @@ const Viewnote: React.FC<NoteViewerViewProps> = ({
   };
 
   const safeContent = useMemo(() => sanitizeNoteHtml(existingNote?.content || ""), [existingNote?.content]);
-
   const { height } = Dimensions.get("window");
+
+  const goToNote = (noteId: string) => {
+    setIsSidebarOpen(false);
+    router.push({
+      pathname: "/Viewnote",
+      params: {
+        existingNoteId: noteId,
+        allNotesData: allNotesDataSerialized,
+      },
+    });
+  };
+
+  const renderSidebarSection = (title: string, items: Note[], emptyText: string) => (
+    <View style={styles.sidebarSection}>
+      <Text style={[styles.sidebarSectionTitle, { color: textColor }]}>
+        {title} ({items.length})
+      </Text>
+      {items.length > 0 ? (
+        items.slice(0, 8).map((item) => (
+          <TouchableOpacity
+            key={`${title}-${item.id}`}
+            style={[
+              styles.sidebarItem,
+              {
+                borderColor,
+                backgroundColor: item.id === existingNote?.id ? (isDarkTheme ? "#1f2937" : "#dbeafe") : "transparent",
+              },
+            ]}
+            onPress={() => goToNote(item.id)}
+          >
+            <Text style={[styles.sidebarItemTitle, { color: textColor }]} numberOfLines={1}>
+              {item.title || "Sin titulo"}
+            </Text>
+            <Text style={[styles.sidebarItemMeta, { color: subtextColor }]} numberOfLines={1}>
+              {item.tag || "Sin tag"}
+            </Text>
+          </TouchableOpacity>
+        ))
+      ) : (
+        <Text style={[styles.sidebarEmptyText, { color: subtextColor }]}>{emptyText}</Text>
+      )}
+    </View>
+  );
+
+  const renderSidebarContent = (mobile = false) => (
+    <ScrollView
+      style={[
+        styles.sidebar,
+        mobile && styles.sidebarMobile,
+        { backgroundColor: isDarkTheme ? "#0f172a" : "#f8fafc", borderColor },
+      ]}
+      contentContainerStyle={styles.sidebarContent}
+      showsVerticalScrollIndicator={false}
+    >
+      <Text style={[styles.sidebarTitle, { color: textColor }]}>Notas</Text>
+      {renderSidebarSection("Favoritas", favoriteNotes, "Sin notas favoritas")}
+      {renderSidebarSection("Archivadas", archivedNotes, "Sin notas archivadas")}
+      {renderSidebarSection("Todas las notas", sortedNotes, "No hay notas")}
+    </ScrollView>
+  );
 
   if (!existingNote) {
     return (
@@ -182,134 +235,97 @@ const Viewnote: React.FC<NoteViewerViewProps> = ({
   }
 
   return (
-    <SafeAreaView
-      style={[
-        isWeb ? styles.containerWeb : styles.containerMovil,
-        { backgroundColor: bgColor },
-      ]}
-    >
-      {/* Header */}
-      <View
-        style={[
-          isWeb ? styles.webHeader : styles.header,
-          { backgroundColor: bgColor },
-        ]}
-      >
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.push("/listview")}
-        >
+    <SafeAreaView style={[isWeb ? styles.containerWeb : styles.containerMovil, { backgroundColor: bgColor }]}>
+      <View style={[isWeb ? styles.webHeader : styles.header, { backgroundColor: bgColor }]}>
+        <TouchableOpacity style={styles.backButton} onPress={() => router.push("/listview")}>
           <FontAwesome name="arrow-left" size={22} color="#3b82f6" />
         </TouchableOpacity>
 
-        <Text style={[styles.headerMainTitle, { color: textColor }]}>
-          Ver Nota
-        </Text>
+        <Text style={[styles.headerMainTitle, { color: textColor }]}>Ver Nota</Text>
 
-        {/* Botón Editar (navega al editor real si se necesita) */}
-        <TouchableOpacity
-          style={styles.editButton}
-          onPress={() =>
-            router.push({
-              pathname: "/editorview",
-              params: {
-                existingNoteId: existingNote.id,
-                allNotesData: JSON.stringify(allNotes),
-              },
-            })
-          }
-        >
-          <FontAwesome name="pencil" size={16} color="#3b82f6" />
-          <Text style={styles.editButtonText}>Editar</Text>
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          {!isWeb && (
+            <TouchableOpacity style={styles.sidebarToggleButton} onPress={() => setIsSidebarOpen(true)}>
+              <FontAwesome name="list-ul" size={16} color="#3b82f6" />
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity
+            style={styles.editButton}
+            onPress={() =>
+              router.push({
+                pathname: "/editorview",
+                params: {
+                  existingNoteId: existingNote.id,
+                  allNotesData: allNotesDataSerialized,
+                },
+              })
+            }
+          >
+            <FontAwesome name="pencil" size={16} color="#3b82f6" />
+            <Text style={styles.editButtonText}>Editar</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
-      <ScrollView
-        style={[styles.content, { backgroundColor: bgColor }]}
-        contentContainerStyle={styles.contentContainer}
-        scrollEnabled={true}
-        // Desactivar interacciones que editen el contenido
-        keyboardShouldPersistTaps="never"
-      >
-        {/* Título */}
-        <Text
-          style={[
-            styles.titleText,
-            { color: textColor },
-          ]}
-          selectable={false}
+      <View style={isWeb ? styles.webBody : styles.mobileBody}>
+        <ScrollView
+          style={[styles.content, { backgroundColor: bgColor }]}
+          contentContainerStyle={styles.contentContainer}
+          keyboardShouldPersistTaps="never"
         >
-          {existingNote.title}
-        </Text>
-
-        {/* Meta: tag + fecha */}
-        <View style={styles.metaRow}>
-          <View
-            style={[
-              styles.tagBadge,
-              { backgroundColor: noteTagStyle.backgroundColor, borderColor: noteTagStyle.borderColor },
-            ]}
-          >
-            <Text style={[styles.tagText, { color: noteTagStyle.color }]}>
-              {existingNote.tag}
-            </Text>
-          </View>
-          <Text style={[styles.dateText, { color: subtextColor }]}>
-            {formatDate(existingNote.date)}
+          <Text style={[styles.titleText, { color: textColor }]} selectable={false}>
+            {existingNote.title}
           </Text>
-        </View>
 
-        {/* Separador */}
-        <View style={[styles.divider, { backgroundColor: borderColor }]} />
+          <View style={styles.metaRow}>
+            <View
+              style={[
+                styles.tagBadge,
+                { backgroundColor: noteTagStyle.backgroundColor, borderColor: noteTagStyle.borderColor },
+              ]}
+            >
+              <Text style={[styles.tagText, { color: noteTagStyle.color }]}>{existingNote.tag}</Text>
+            </View>
+            <Text style={[styles.dateText, { color: subtextColor }]}>{formatDate(existingNote.date)}</Text>
+          </View>
 
-        {/* Contenido de la nota */}
-        {isWeb ? (
-          // Web: renderizar HTML directamente como lectura
-          <View
-            style={{
-              minHeight: 300,
-              backgroundColor: bgColor,
-              borderRadius: 8,
-              padding: 8,
-            }}
-            pointerEvents="none"
-          >
-            <div
+          <View style={[styles.divider, { backgroundColor: borderColor }]} />
+
+          {isWeb ? (
+            <View style={{ minHeight: 300, backgroundColor: bgColor, borderRadius: 8, padding: 8 }} pointerEvents="none">
+              <div
+                style={{
+                  color: textColor,
+                  fontSize: 17,
+                  lineHeight: 1.7,
+                  fontFamily: "Arial, sans-serif",
+                  userSelect: "none",
+                  pointerEvents: "none",
+                }}
+                dangerouslySetInnerHTML={{ __html: safeContent }}
+              />
+            </View>
+          ) : (
+            <View
               style={{
-                color: textColor,
-                fontSize: 17,
-                lineHeight: 1.7,
-                fontFamily: "Arial, sans-serif",
-                userSelect: "none",
-                pointerEvents: "none",
+                minHeight: 100,
+                height: height * 0.6,
+                backgroundColor: bgColor,
+                borderColor: borderColor,
+                borderRadius: 8,
               }}
-              dangerouslySetInnerHTML={{ __html: safeContent }}
-            />
-          </View>
-        ) : (
-          // Mobile: RichText en modo no editable
-          <View
-            style={{
-              minHeight: 100,
-              height: height * 0.6,
-              backgroundColor: bgColor,
-              borderColor: borderColor,
-              borderRadius: 8,
-            }}
-            pointerEvents="none"
-          >
-            <RichText
-              editor={editor}
-              style={{ backgroundColor: "transparent" }}
-              onMessage={handleMessage}
-              scrollEnabled={false}
-            />
-          </View>
-        )}
+              pointerEvents="none"
+            >
+              <RichText
+                editor={editor}
+                style={{ backgroundColor: "transparent", minHeight: editorHeight }}
+                onMessage={handleMessage}
+                scrollEnabled={false}
+              />
+            </View>
+          )}
 
-        {/* Referencias salientes */}
-        {existingNote.references?.outgoing &&
-          existingNote.references.outgoing.length > 0 && (
+          {existingNote.references?.outgoing && existingNote.references.outgoing.length > 0 && (
             <View style={[styles.referencesSection, { borderColor }]}>
               <Text style={[styles.referencesTitle, { color: subtextColor }]}>
                 <FontAwesome name="link" size={13} color={subtextColor} /> Referencias
@@ -320,25 +336,25 @@ const Viewnote: React.FC<NoteViewerViewProps> = ({
                   <TouchableOpacity
                     key={refId}
                     style={styles.referenceChip}
-                    onPress={() =>
-                      router.push({
-                        pathname: "/viewer",
-                        params: {
-                          existingNoteId: refNote.id,
-                          allNotesData: JSON.stringify(allNotes),
-                        },
-                      })
-                    }
+                    onPress={() => goToNote(refNote.id)}
                   >
-                    <Text style={styles.referenceChipText}>
-                      @ {refNote.title}
-                    </Text>
+                    <Text style={styles.referenceChipText}>@ {refNote.title}</Text>
                   </TouchableOpacity>
                 ) : null;
               })}
             </View>
           )}
-      </ScrollView>
+        </ScrollView>
+
+        {isWeb && renderSidebarContent()}
+      </View>
+
+      {!isWeb && isSidebarOpen && (
+        <View style={styles.mobileSidebarOverlay}>
+          <TouchableOpacity style={styles.mobileSidebarBackdrop} activeOpacity={1} onPress={() => setIsSidebarOpen(false)} />
+          <View style={styles.mobileSidebarPanel}>{renderSidebarContent(true)}</View>
+        </View>
+      )}
     </SafeAreaView>
   );
 };
@@ -350,6 +366,14 @@ const styles = StyleSheet.create({
   containerWeb: {
     flex: 1,
     paddingHorizontal: 16,
+  },
+  mobileBody: {
+    flex: 1,
+  },
+  webBody: {
+    flex: 1,
+    flexDirection: "row",
+    gap: 16,
   },
   header: {
     flexDirection: "row",
@@ -379,6 +403,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 6,
     borderRadius: 10,
+  },
+  headerActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  sidebarToggleButton: {
+    padding: 8,
   },
   editButton: {
     flexDirection: "row",
@@ -457,6 +489,78 @@ const styles = StyleSheet.create({
     color: "#4a9eff",
     fontSize: 13,
     fontWeight: "500",
+  },
+  sidebar: {
+    width: 320,
+    borderWidth: 1,
+    borderRadius: 14,
+    marginTop: 8,
+    marginBottom: 16,
+    marginRight: 8,
+    flex: 0,
+  },
+  sidebarContent: {
+    padding: 14,
+    gap: 12,
+  },
+  sidebarMobile: {
+    width: "100%",
+    marginTop: 0,
+    marginBottom: 0,
+    marginRight: 0,
+    borderRadius: 0,
+    borderWidth: 0,
+  },
+  sidebarTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+  },
+  sidebarSection: {
+    gap: 8,
+  },
+  sidebarSectionTitle: {
+    fontSize: 12,
+    fontWeight: "700",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  sidebarItem: {
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    gap: 2,
+  },
+  sidebarItemTitle: {
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  sidebarItemMeta: {
+    fontSize: 11,
+    textTransform: "capitalize",
+  },
+  sidebarEmptyText: {
+    fontSize: 12,
+    fontStyle: "italic",
+  },
+  mobileSidebarOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    flexDirection: "row",
+    zIndex: 40,
+  },
+  mobileSidebarBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.45)",
+  },
+  mobileSidebarPanel: {
+    width: "82%",
+    maxWidth: 360,
+    borderLeftWidth: 1,
+    borderLeftColor: "#334155",
   },
 });
 

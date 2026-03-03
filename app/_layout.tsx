@@ -1,20 +1,14 @@
-import {  DarkTheme,
-  DefaultTheme,
-  ThemeProvider as NavigationThemeProvider,
-} from "@react-navigation/native";
 import { Redirect, Stack, usePathname } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import "react-native-reanimated";
-
-import {
-  SafeAreaProvider,
-  useSafeAreaInsets,
-} from "react-native-safe-area-context";
+import { StyleSheet, View } from "react-native";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import FloatingNavBar from "@/components/FloatingNavBar";
+import GlobalNotesSidebar from "@/components/GlobalNotesSidebar";
+import { UserProvider, useUser } from "@/context/UserContext";
 import { useColorScheme as useAppColorScheme } from "@/hooks/use-color-scheme";
 import { ThemeProvider } from "@/hooks/use-theme";
-import { UserProvider, useUser } from "@/context/UserContext";
 
 export default function RootLayout() {
   return (
@@ -32,37 +26,37 @@ function RootLayoutContent() {
   const pathname = usePathname();
   const colorScheme = useAppColorScheme();
   const isDark = colorScheme === "dark";
-
-  // Ahora viene del contexto real, no de estado local
   const { user, isLoading } = useUser();
   const isAuthenticated = !!user;
 
-  // Mientras se verifica la sesión guardada, no renderizar nada
+  const hideSidebar = pathname === "/login" || pathname === "/editorview" || pathname === "/listview";
+
   if (isLoading) return null;
 
   return (
     <>
-      {/* Redirigir a login si no está autenticado */}
-      {!isAuthenticated && pathname !== "/login" && (
-        <Redirect href="/login" />
-      )}
+      {!isAuthenticated && pathname !== "/login" && <Redirect href="/login" />}
+      {isAuthenticated && pathname === "/login" && <Redirect href="/App" />}
 
-      {/* Redirigir a la app si ya está autenticado e intenta ir al login */}
-      {isAuthenticated && pathname === "/login" && (
-        <>
-          <Redirect href="/App" />
-          {/* <FloatingNavBar /> */}
-        </>
-      )}
+      <View style={styles.appShell}>
+        <View style={styles.mainContent}>
+          <Stack screenOptions={{ headerShown: false }} />
+          {pathname !== "/login" && <FloatingNavBar />}
+        </View>
 
-      <Stack screenOptions={{ headerShown: false }} />
-
-      {
-        pathname !== "/login" ? <><FloatingNavBar /></> : (
-          null
-        )
-      }
+        {/* <GlobalNotesSidebar hidden={hideSidebar} routeKey={pathname} /> */}
+      </View>
       <StatusBar style={isDark ? "light" : "dark"} />
     </>
   );
 }
+
+const styles = StyleSheet.create({
+  appShell: {
+    flex: 1,
+    flexDirection: "row",
+  },
+  mainContent: {
+    flex: 1,
+  },
+});
