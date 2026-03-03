@@ -10,8 +10,6 @@ import { getTagBadgeStyle } from "@/utils/tagColors";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 
 const isWeb = Platform.OS === "web";
-const FAVORITE_TAGS = ["favorita", "favoritas", "favorite", "favorites", "favourite", "favourites"];
-const ARCHIVED_TAGS = ["archivo", "archivada", "archivadas", "archivado", "archivados", "archive", "archived"];
 
 const Viewnote: React.FC = () => {
   const colorScheme = useColorScheme();
@@ -24,7 +22,6 @@ const Viewnote: React.FC = () => {
     : undefined;
 
   const [editorHeight, setEditorHeight] = useState(100);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const isDarkTheme = isDark;
   const bgColor = isDarkTheme ? "black" : "#ffffff";
@@ -34,19 +31,6 @@ const Viewnote: React.FC = () => {
   const noteTagStyle = getTagBadgeStyle(existingNote?.tag, existingNote?.tagColor);
 
   const allNotesDataSerialized = useMemo(() => JSON.stringify(allNotes), [allNotes]);
-  const normalizeTag = (tag?: string) => (tag || "").trim().toLowerCase();
-  const sortedNotes = useMemo(
-    () => [...allNotes].sort((a, b) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime()),
-    [allNotes]
-  );
-  const favoriteNotes = useMemo(
-    () => sortedNotes.filter((note) => FAVORITE_TAGS.includes(normalizeTag(note.tag))),
-    [sortedNotes]
-  );
-  const archivedNotes = useMemo(
-    () => sortedNotes.filter((note) => ARCHIVED_TAGS.includes(normalizeTag(note.tag))),
-    [sortedNotes]
-  );
 
   const mobileEditorBridge = useEditorBridge({
     initialContent: existingNote?.content || "",
@@ -162,7 +146,6 @@ const Viewnote: React.FC = () => {
   const { height } = Dimensions.get("window");
 
   const goToNote = (noteId: string) => {
-    setIsSidebarOpen(false);
     router.push({
       pathname: "/Viewnote",
       params: {
@@ -171,55 +154,6 @@ const Viewnote: React.FC = () => {
       },
     });
   };
-
-  const renderSidebarSection = (title: string, items: Note[], emptyText: string) => (
-    <View style={styles.sidebarSection}>
-      <Text style={[styles.sidebarSectionTitle, { color: textColor }]}>
-        {title} ({items.length})
-      </Text>
-      {items.length > 0 ? (
-        items.slice(0, 8).map((item) => (
-          <TouchableOpacity
-            key={`${title}-${item.id}`}
-            style={[
-              styles.sidebarItem,
-              {
-                borderColor,
-                backgroundColor: item.id === existingNote?.id ? (isDarkTheme ? "#1f2937" : "#dbeafe") : "transparent",
-              },
-            ]}
-            onPress={() => goToNote(item.id)}
-          >
-            <Text style={[styles.sidebarItemTitle, { color: textColor }]} numberOfLines={1}>
-              {item.title || "Sin titulo"}
-            </Text>
-            <Text style={[styles.sidebarItemMeta, { color: subtextColor }]} numberOfLines={1}>
-              {item.tag || "Sin tag"}
-            </Text>
-          </TouchableOpacity>
-        ))
-      ) : (
-        <Text style={[styles.sidebarEmptyText, { color: subtextColor }]}>{emptyText}</Text>
-      )}
-    </View>
-  );
-
-  const renderSidebarContent = (mobile = false) => (
-    <ScrollView
-      style={[
-        styles.sidebar,
-        mobile && styles.sidebarMobile,
-        { backgroundColor: isDarkTheme ? "#0f172a" : "#f8fafc", borderColor },
-      ]}
-      contentContainerStyle={styles.sidebarContent}
-      showsVerticalScrollIndicator={false}
-    >
-      <Text style={[styles.sidebarTitle, { color: textColor }]}>Notas</Text>
-      {renderSidebarSection("Favoritas", favoriteNotes, "Sin notas favoritas")}
-      {renderSidebarSection("Archivadas", archivedNotes, "Sin notas archivadas")}
-      {renderSidebarSection("Todas las notas", sortedNotes, "No hay notas")}
-    </ScrollView>
-  );
 
   if (!existingNote) {
     return (
@@ -242,11 +176,6 @@ const Viewnote: React.FC = () => {
         <Text style={[styles.headerMainTitle, { color: textColor }]}>Ver Nota</Text>
 
         <View style={styles.headerActions}>
-          {!isWeb && (
-            <TouchableOpacity style={styles.sidebarToggleButton} onPress={() => setIsSidebarOpen(true)}>
-              <FontAwesome name="list-ul" size={16} color="#3b82f6" />
-            </TouchableOpacity>
-          )}
           <TouchableOpacity
             style={styles.editButton}
             onPress={() =>
@@ -343,16 +272,7 @@ const Viewnote: React.FC = () => {
             </View>
           )}
         </ScrollView>
-
-        {isWeb && renderSidebarContent()}
       </View>
-
-      {!isWeb && isSidebarOpen && (
-        <View style={styles.mobileSidebarOverlay}>
-          <TouchableOpacity style={styles.mobileSidebarBackdrop} activeOpacity={1} onPress={() => setIsSidebarOpen(false)} />
-          <View style={styles.mobileSidebarPanel}>{renderSidebarContent(true)}</View>
-        </View>
-      )}
     </SafeAreaView>
   );
 };
@@ -370,8 +290,7 @@ const styles = StyleSheet.create({
   },
   webBody: {
     flex: 1,
-    flexDirection: "row",
-    gap: 16,
+    flexDirection: "column",
   },
   header: {
     flexDirection: "row",
@@ -406,9 +325,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-  },
-  sidebarToggleButton: {
-    padding: 8,
   },
   editButton: {
     flexDirection: "row",
@@ -487,78 +403,6 @@ const styles = StyleSheet.create({
     color: "#4a9eff",
     fontSize: 13,
     fontWeight: "500",
-  },
-  sidebar: {
-    width: 320,
-    borderWidth: 1,
-    borderRadius: 14,
-    marginTop: 8,
-    marginBottom: 16,
-    marginRight: 8,
-    flex: 0,
-  },
-  sidebarContent: {
-    padding: 14,
-    gap: 12,
-  },
-  sidebarMobile: {
-    width: "100%",
-    marginTop: 0,
-    marginBottom: 0,
-    marginRight: 0,
-    borderRadius: 0,
-    borderWidth: 0,
-  },
-  sidebarTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-  },
-  sidebarSection: {
-    gap: 8,
-  },
-  sidebarSectionTitle: {
-    fontSize: 12,
-    fontWeight: "700",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-  },
-  sidebarItem: {
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    gap: 2,
-  },
-  sidebarItemTitle: {
-    fontSize: 13,
-    fontWeight: "600",
-  },
-  sidebarItemMeta: {
-    fontSize: 11,
-    textTransform: "capitalize",
-  },
-  sidebarEmptyText: {
-    fontSize: 12,
-    fontStyle: "italic",
-  },
-  mobileSidebarOverlay: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    flexDirection: "row",
-    zIndex: 40,
-  },
-  mobileSidebarBackdrop: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.45)",
-  },
-  mobileSidebarPanel: {
-    width: "82%",
-    maxWidth: 360,
-    borderLeftWidth: 1,
-    borderLeftColor: "#334155",
   },
 });
 
