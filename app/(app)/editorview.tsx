@@ -98,6 +98,10 @@ const EditorView: React.FC<EditorViewProps> = ({
   const [showTagModal, setShowTagModal] = useState(false);
   const [customTags, setCustomTags] = useState<string[]>([]);
   const [removedTags, setRemovedTags] = useState<string[]>([]);
+  const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const saveInFlightRef = useRef(false);
+  const lastSavedSnapshotRef = useRef<string | null>(null);
+  const persistNoteRef = useRef<(source: "manual" | "auto") => Promise<boolean>>(async () => false);
 
   const isDarkTheme = colorScheme === "dark";
   const bgColor = isDarkTheme ? "black" : "#ffffff";
@@ -148,9 +152,15 @@ const EditorView: React.FC<EditorViewProps> = ({
     if (existingNote) {
       setTitle(existingNote.title);
       setTag(existingNote.tag);
+      lastSavedSnapshotRef.current = JSON.stringify({
+        title: existingNote.title.trim(),
+        tag: existingNote.tag,
+        content: existingNote.content || "",
+      });
     } else {
       setTitle("");
       setTag("Personal");
+      lastSavedSnapshotRef.current = null;
     }
   }, [existingNote?.id]);
 
@@ -598,108 +608,162 @@ const EditorView: React.FC<EditorViewProps> = ({
     return blocks;
   };
 
-  const handleSaveWeb = async () => {
-    if (isSaving) return;
+  const persistNote = useCallback(
+    async (source: "manual" | "auto"): Promise<boolean> => {
+      if (saveInFlightRef.current) return false;
 
-    if (!title.trim()) {
-      setShowNotTitleAlert(true);
-      return;
-    }
-
-    try {
-      setIsSaving(true);
-      const sanitizedContent = sanitizeNoteHtml(webContent);
-      const outgoingReferences: string[] = [];
-      const refRegex = /data-note-id="([^"]+)"/g;
-      let match;
-      while ((match = refRegex.exec(sanitizedContent)) !== null) {
-        if (match[1] && match[1] !== existingNote?.id) {
-          outgoingReferences.push(match[1]);
+      const cleanTitle = title.trim();
+      if (!cleanTitle) {
+        if (source === "manual") {
+          setShowNotTitleAlert(true);
         }
+        return false;
       }
 
-      const noteId = normalizedExistingNoteId || existingNote?.id || Date.now().toString();
-      const newNote: Note = {
-        id: noteId,
-        title,
-        content: sanitizedContent,
-        tag,
-        tagColor: getTagColor(tag),
-        date: new Date().toISOString(),
-        references: {
-          outgoing: [...new Set(outgoingReferences)],
-          incoming: existingNote?.references?.incoming || [],
-        },
-        blocks: webBlocks,
-      };
+      saveInFlightRef.current = true;
+      if (source === "manual") {
+        setIsSaving(true);
+      }
 
-      let existingNotes: Note[] = [];
-      const webNotesJson = localStorage.getItem('orbital-notes');
-      existingNotes = webNotesJson ? JSON.parse(webNotesJson) : [];
+      try {
+        let contentHTML = "";
+        let blocks: Block[] = [];
 
-      const updatedNotes = existingNotes.filter(n => n.id !== noteId);
-      updatedNotes.push(newNote);
+        if (isWeb) {
+          contentHTML = sanitizeNoteHtml(webContent);
+          blocks = webBlocks;
+        } else {
+          if (!editor) return false;
+          const rawContentHTML = await editor.getHTML();
+          contentHTML = sanitizeNoteHtml(rawContentHTML);
+          blocks = extractBlocks(contentHTML);
+        }
 
-      localStorage.setItem('orbital-notes', JSON.stringify(updatedNotes));
+        const snapshotKey = JSON.stringify({
+          title: cleanTitle,
+          tag,
+          content: contentHTML,
+        });
+        if (source === "auto" && snapshotKey === lastSavedSnapshotRef.current) {
+          return true;
+        }
 
-      setShowAlert(true);
-    } catch (error) {
-      setShowAlertNotSaved(true);
-      console.error('Error saving note:', error);
-    } finally {
-      setIsSaving(false);
+        const noteId = normalizedExistingNoteId || existingNote?.id || Date.now().toString();
+        const newNote: Note = {
+          id: noteId,
+          title: cleanTitle,
+          content: contentHTML,
+          tag,
+          tagColor: getTagColor(tag),
+          date: new Date().toISOString(),
+          references: {
+            outgoing: extractReferences(contentHTML),
+            incoming: existingNote?.references?.incoming || [],
+          },
+          blocks,
+        };
+
+        const existingNotes = await readNotesFromStorage();
+        const updatedNotes = existingNotes.filter((n) => n.id !== noteId);
+        updatedNotes.push(newNote);
+        await writeNotesToStorage(updatedNotes);
+
+        lastSavedSnapshotRef.current = snapshotKey;
+        if (source === "manual") {
+          setShowAlert(true);
+        }
+        return true;
+      } catch (error) {
+        console.error("Error saving note:", error);
+        if (source === "manual") {
+          setShowAlertNotSaved(true);
+        }
+        return false;
+      } finally {
+        saveInFlightRef.current = false;
+        if (source === "manual") {
+          setIsSaving(false);
+        }
+      }
+    },
+    [
+      editor,
+      existingNote?.id,
+      existingNote?.references?.incoming,
+      normalizedExistingNoteId,
+      readNotesFromStorage,
+      tag,
+      title,
+      webBlocks,
+      webContent,
+      writeNotesToStorage,
+    ]
+  );
+
+  const handleSaveWeb = useCallback(async () => {
+    await persistNote("manual");
+  }, [persistNote]);
+
+  const handleSave = useCallback(async () => {
+    const saved = await persistNote("manual");
+    if (saved) {
+      router.push('/listview');
     }
-  };
+  }, [persistNote]);
 
-  const handleSave = async () => {
-    if (isSaving) return;
+  const handleBackPress = useCallback(async () => {
+    await persistNote("auto");
+    router.push("/listview");
+  }, [persistNote]);
 
-    if (!title.trim()) {
-      setShowNotTitleAlert(true);
-      return;
+  useEffect(() => {
+    persistNoteRef.current = persistNote;
+  }, [persistNote]);
+
+  useEffect(() => {
+    if (autosaveTimerRef.current) {
+      clearTimeout(autosaveTimerRef.current);
+      autosaveTimerRef.current = null;
     }
 
-    setIsSaving(true);
+    autosaveTimerRef.current = setTimeout(() => {
+      void persistNote("auto");
+    }, 700);
 
-    try {
-      const rawContentHTML = await editor.getHTML();
-      const contentHTML = sanitizeNoteHtml(rawContentHTML);
-      console.log('Contenido HTML a guardar:', contentHTML);
-      const outgoingReferences = extractReferences(contentHTML);
-      const blocks = extractBlocks(contentHTML);
+    return () => {
+      if (autosaveTimerRef.current) {
+        clearTimeout(autosaveTimerRef.current);
+        autosaveTimerRef.current = null;
+      }
+    };
+  }, [title, tag, webContent, webBlocks, persistNote]);
 
-      const noteId = normalizedExistingNoteId || existingNote?.id || Date.now().toString();
-      const newNote: Note = {
-        id: noteId,
-        title,
-        content: contentHTML,
-        tag,
-        tagColor: getTagColor(tag),
-        date: new Date().toISOString(),
-        references: {
-          outgoing: outgoingReferences,
-          incoming: existingNote?.references?.incoming || [],
-        },
-        blocks,
-      };
+  useEffect(() => {
+    if (isWeb || !editor) return;
 
-      const mobileNotesJson = await AsyncStorage.getItem('orbital-notes');
-      let existingNotes: Note[] = mobileNotesJson ? JSON.parse(mobileNotesJson) : [];
+    const interval = setInterval(() => {
+      void persistNote("auto");
+    }, 2000);
 
-      const updatedNotes = existingNotes.filter(n => n.id !== noteId);
-      updatedNotes.push(newNote);
+    return () => clearInterval(interval);
+  }, [editor, persistNote]);
 
-      await AsyncStorage.setItem('orbital-notes', JSON.stringify(updatedNotes));
+  useEffect(() => {
+    return () => {
+      void persistNoteRef.current("auto");
+    };
+  }, []);
 
-      setShowAlert(true);
-      router.push('/listview')
-    } catch (error) {
-      console.error('Error saving note:', error);
-      setShowAlertNotSaved(true);
-    } finally {
-      setIsSaving(false);
-    }
-  };
+  useEffect(() => {
+    if (!isWeb || typeof window === "undefined") return;
+
+    const handleBeforeUnload = () => {
+      void persistNote("auto");
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [persistNote]);
 
   const { width, height } = useWindowDimensions();
   const isCompactWeb = isWeb && width < 760;
@@ -718,7 +782,7 @@ const EditorView: React.FC<EditorViewProps> = ({
           >
             <View style={[styles.webHeaderSingleRow, isCompactWeb && styles.webHeaderSingleRowCompact]}>
               <View style={styles.webHeaderLeftActions}>
-                <TouchableOpacity style={[styles.backButton, styles.backButtonCompact]} onPress={() => router.push('/listview')}>
+                <TouchableOpacity style={[styles.backButton, styles.backButtonCompact]} onPress={handleBackPress}>
                   <FontAwesome name="arrow-left" size={20} color="#3b82f6" />
                 </TouchableOpacity>
               </View>
@@ -779,7 +843,7 @@ const EditorView: React.FC<EditorViewProps> = ({
           </View>
         ) : (
           <View style={[styles.header, { backgroundColor: bgColor }]}>
-            <TouchableOpacity style={styles.backButton} onPress={() => router.push('/listview')}>
+            <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
               <FontAwesome name="arrow-left" size={22} color="#3b82f6" />
             </TouchableOpacity>
             <View style={[styles.headerTitleWrap, styles.headerTitleWrapMobile]}>
