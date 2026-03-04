@@ -1,35 +1,35 @@
 // components/EditorView.tsx
-import React, { useEffect, useState, useReducer, useCallback, useRef, useMemo } from "react";
-import {
-  View,
-  TextInput,
-  StyleSheet,
-  TouchableOpacity,
-  Text,
-  ScrollView,
-  Platform,
-  Pressable,
-  useWindowDimensions,
-  Modal,
-} from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { FontAwesome } from "@expo/vector-icons";
-import { Note, Block } from "@/types/types";
-import TextEditorToolbar from "@/components/TextEditorToolbar";
-import CustomAlert from "@/components/modal/CustonAlert";
-import {
-  RichText,
-  useEditorBridge,
-  TenTapStartKit,
-} from "@10play/tentap-editor";
-import { router, useLocalSearchParams } from "expo-router";
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { MentionSuggestions } from "@/components/MentionSuggestions";
 import { MentionNavigationButtons } from "@/components/MentionNavigationButtons";
+import { MentionSuggestions } from "@/components/MentionSuggestions";
+import TextEditorToolbar from "@/components/TextEditorToolbar";
 import WebEditor from "@/components/WebEditor";
 import WebToolbar from "@/components/WebToolbar";
-import { getTagBadgeStyle, getTagColor } from "@/utils/tagColors";
+import CustomAlert from "@/components/modal/CustonAlert";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { Block, Note } from "@/types/types";
+import { getTagBadgeStyle, getTagColor } from "@/utils/tagColors";
+import {
+  RichText,
+  TenTapStartKit,
+  useEditorBridge,
+} from "@10play/tentap-editor";
+import { FontAwesome } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { router, useLocalSearchParams } from "expo-router";
+import React, { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
+import {
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
+} from "react-native";
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const isWeb = Platform.OS === "web";
 const DEFAULT_TAGS = ["Personal", "Trabajo", "Estudio", "Ideas", "Importante"];
@@ -60,10 +60,27 @@ const EditorView: React.FC<EditorViewProps> = ({
   const allNotesRef = useRef(allNotes);
   const existingNoteIdRef = useRef(normalizedExistingNoteId);
 
+  // keep a stable note id across renders so that autosave doesn't create new notes
+  const noteIdRef = useRef<string | null>(
+    normalizedExistingNoteId || existingNote?.id || null
+  );
+
   useEffect(() => {
     allNotesRef.current = allNotes;
     existingNoteIdRef.current = normalizedExistingNoteId;
-  }, [allNotes, normalizedExistingNoteId]);
+
+    // when the existing note changes (either editing an existing one or creating a new one),
+    // ensure we only set the id once. For a new note, generate an id and keep it in the ref.
+    if (noteIdRef.current === null) {
+      if (normalizedExistingNoteId) {
+        noteIdRef.current = normalizedExistingNoteId;
+      } else if (existingNote?.id) {
+        noteIdRef.current = existingNote.id;
+      } else {
+        noteIdRef.current = Date.now().toString();
+      }
+    }
+  }, [allNotes, normalizedExistingNoteId, existingNote]);
 
   const [title, setTitle] = useState("");
   const [tag, setTag] = useState("Trabajo");
@@ -668,7 +685,12 @@ const EditorView: React.FC<EditorViewProps> = ({
         }
 
         const nowIso = new Date().toISOString();
-        const noteId = normalizedExistingNoteId || existingNote?.id || Date.now().toString();
+        // use the stable id stored in the ref; if for some reason it is missing generate and persist it
+        let noteId = noteIdRef.current;
+        if (!noteId) {
+          noteId = normalizedExistingNoteId || existingNote?.id || Date.now().toString();
+          noteIdRef.current = noteId;
+        }
         const existingNotes = await readNotesFromStorage();
         const persistedNote = existingNotes.find((n) => n.id === noteId);
         const isEditingExistingNote = Boolean(persistedNote || existingNote);
