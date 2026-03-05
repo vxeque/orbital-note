@@ -2,152 +2,628 @@
 
 A cross-platform note-taking application built with Expo and React Native, featuring Google OAuth authentication and Google Drive synchronization.
 
-## Overview
+## 📋 Overview
 
-Orbital Note is a modern, cloud-synchronized note-taking app available on Android, and Web. It provides users with a seamless experience across devices using Google authentication and real-time synchronization with Google Drive.
+Orbital Note is a modern, cloud-synchronized note-taking app available on **Android** and **Web**. It provides users with a seamless experience across devices using Google authentication and real-time synchronization with Google Drive. The app features a rich text editor with support for mentions, tags, and cross-note references.
 
-## Images 
-### Login
-![alt text](image.png)
-
-### Index
-![alt text](image-1.png)
-
-### Editor text
-![alt text](image-2.png)
-
-### List Notes
-![alt text](image-3.png)
-
-## Features
+## 🎯 Features
 
 - 🔐 **Google OAuth Authentication** - Secure login via Google Account
 - ☁️ **Google Drive Sync** - Automatic synchronization of notes
-- 📝 **Rich Text Editor** - TipTap on web, TenTap on mobile
+- 📝 **Rich Text Editor** - TipTap on web, TenTap on mobile with formatting tools
 - 🎯 **Cross-Platform** - Native Android and web support
 - 📱 **Responsive Design** - Optimized for all screen sizes
 - ⚡ **Type-Safe** - Full TypeScript support
+- 🏷️ **Tags & Colors** - Organize notes with customizable tags
+- 🔗 **Note References** - Link and navigate between related notes
 
-## Tech Stack
+## 📸 Screenshots
 
-- **Framework**: React Native + Expo
-- **Routing**: Expo Router
-- **Language**: TypeScript
-- **Authentication**: expo-auth-session + Google OAuth
-- **Cloud Sync**: Google Drive API
-- **Editors**: TipTap (web), TenTap (mobile)
-- **Build Tool**: Expo
+| Login | Home | Editor | List |
+|-------|------|--------|------|
+| ![Login](image.png) | ![Home](image-1.png) | ![Editor](image-2.png) | ![List](image-3.png) |
 
-## Requirements
+---
 
-- Node.js 16+ and npm/yarn
-- Expo CLI (`npm install -g expo-cli`)
-- For Android: Android Studio or Android SDK
-- Google Cloud Project with OAuth 2.0 credentials
+## 🏗️ Architecture Overview
 
-## Installation
+### Architecture Pattern
+
+Orbital Note follows a **Feature-Based Modular Architecture** with clear separation of concerns:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    EXPO ROUTER (Navigation)                  │
+├─────────────────────────────────────────────────────────────┤
+│            PRESENTATION LAYER (Components & Views)           │
+├──────────────────┬──────────────────┬──────────────────────┤
+│   UI Components  │  Custom Hooks    │   Display Components  │
+├─────────────────────────────────────────────────────────────┤
+│           STATE MANAGEMENT (React Context)                   │
+│                   (UserContext, Theme)                       │
+├─────────────────────────────────────────────────────────────┤
+│               BUSINESS LOGIC LAYER (Services)                │
+│        (Auth, Drive Sync, Token Management)                 │
+├─────────────────────────────────────────────────────────────┤
+│            DATA LAYER (AsyncStorage + Google Drive)          │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Directory Structure
+
+```
+orbital-note/
+│
+├── app/                              # Expo Router Pages
+│   ├── _layout.tsx                   # Root layout with providers
+│   ├── (auth)/
+│   │   └── login.tsx                 # Google OAuth login screen
+│   │
+│   └── (app)/                        # Main app stack
+│       ├── index.tsx                 # Home view (notes list)
+│       ├── editorview.tsx            # Note editor
+│       ├── listview.tsx              # Full notes list view
+│       ├── Viewnote.tsx              # Note detail view
+│       ├── menu.tsx                  # Menu/settings
+│       └── App.tsx                   # App shell
+│
+├── components/                       # Reusable UI Components
+│   ├── FloatingNavBar.tsx            # Bottom navigation bar
+│   ├── GlobalNotesSidebar.tsx        # Side panel with notes
+│   ├── TextEditorToolbar.tsx         # Editor formatting toolbar
+│   ├── WebEditor.tsx                 # Web-specific editor
+│   ├── WebToolbar.tsx                # Web editor toolbar
+│   ├── MentionSuggestions.tsx        # @mention autocomplete
+│   ├── MentionNavigationButtons.tsx  # Navigation for mentions
+│   ├── SafeAreaProvider.tsx          # Safe area wrapper
+│   │
+│   └── modal/                        # Modal dialogs
+│       ├── CustonAlert.tsx           # Custom alert modal
+│       ├── Success.tsx               # Success notification
+│       ├── logout/
+│       │   └── LogoutModal.tsx       # Logout confirmation
+│       └── saveNote/
+│           └── saveNote.tsx          # Save note dialog
+│
+├── context/                          # State Management
+│   └── UserContext.tsx               # User auth state & storage keys
+│
+├── services/                         # Business Logic & APIs
+│   ├── auth/
+│   │   └── useAuth.ts                # Google OAuth hook
+│   ├── tokenStorage.ts               # Token persistence
+│   └── sincronizarWithDrive.ts       # Google Drive API integration
+│
+├── hooks/                            # Custom React Hooks
+│   ├── use-color-scheme.ts           # System color scheme detection
+│   ├── use-color-scheme.web.ts       # Web-specific color scheme
+│   ├── use-theme-color.ts            # Theme color management
+│   ├── use-theme-context.ts          # Theme context hook
+│   └── use-theme.tsx                 # Theme provider & hook
+│
+├── display/                          # Display Components
+│   ├── HomeView.tsx                  # Home page layout
+│   └── ListView.tsx                  # List view layout
+│
+├── extensions/                       # Editor Extensions
+│   ├── BlockId.ts                    # Block ID tiptap extension
+│   └── NoteMention.ts                # Note mention tiptap extension
+│
+├── utils/                            # Utility Functions
+│   ├── referenceManager.ts           # Handle note references
+│   └── tagColors.ts                  # Tag color utilities
+│
+├── types/                             # TypeScript Definitions
+│   └── types.ts                      # Global type definitions
+│
+├── constants/                        # App Constants
+│   └── theme.ts                      # Theme configuration
+│
+├── assets/                           # Static Assets
+│   └── images/                       # App icons & images
+│
+└── android/                          # Android Native Config
+    └── app/                          # Android app module
+```
+
+---
+
+## 📊 Data Flow Architecture
+
+### 1. Authentication Flow
+
+```
+┌─────────────┐
+│  User Login │
+│   Screen    │
+└──────┬──────┘
+       │
+       ▼ (Tap "Login with Google")
+┌──────────────────────────────────────┐
+│  useAuth Hook                        │
+│  - Google OAuth Request              │
+│  - Handle redirect                   │
+└──────────────────┬───────────────────┘
+                   │
+                   ▼ (Success)
+┌─────────────────────────────────────────┐
+│  ServiceLoginWithGoogle                 │
+│  - Get access token                     │
+│  - Fetch user info (Google API)         │
+│  - Decrypt user data if exists          │
+└──────────────────┬──────────────────────┘
+                   │
+                   ▼
+┌───────────────────────────────────────┐
+│  UserContext.setUser()                │
+│  - Store user in state                │
+│  - Persist to AsyncStorage            │
+│  - Save token with expiration         │
+└───────────────────────────────────────┘
+                   │
+                   ▼
+             Logged In
+           Redirect to /App
+```
+
+### 2. Note Management Flow
+
+```
+┌──────────────────────────┐
+│  Notes List View         │
+│  (index.tsx)             │
+└────────┬─────────────────┘
+         │
+    ┌────┴─────┬──────────┬──────────┐
+    │           │          │          │
+    ▼           ▼          ▼          ▼
+ Create      Update      Delete    Navigate
+   Note        Note       Note       Note
+    │           │          │          │
+    └────┬──────┴──────┬───┴──────────┘
+         │             │
+         ▼             ▼
+   ┌──────────────────────────────┐
+   │  AsyncStorage                │
+   │  (Local persistence)         │
+   │  - Notes list                │
+   │  - Tags                      │
+   └────────┬─────────────────────┘
+            │
+            ▼
+   ┌──────────────────────────────┐
+   │  Google Drive Sync           │
+   │  (subirArchivoADrive)        │
+   │  - Upload JSON files         │
+   │  - Sync across devices       │
+   └──────────────────────────────┘
+```
+
+### 3. State Management
+
+```
+┌─────────────────────────────────────┐
+│        Root Provider                │
+│   (_layout.tsx)                     │
+└────────┬────────────────────────────┘
+         │
+    ┌────┴────┬──────────┬──────────┐
+    │          │          │          │
+    ▼          ▼          ▼          ▼
+ UserProvider ThemeProvider SafeAreaProvider App Stack
+    │
+    ▼
+┌──────────────────────────────────────┐
+│  UserContext                         │
+│  ├─ user: User | null               │
+│  ├─ setUser(user)                   │
+│  ├─ clearUser()                     │
+│  └─ isLoading: boolean              │
+└──────────────────────────────────────┘
+```
+
+---
+
+##  Core Data Models
+
+### User Model
+
+```typescript
+interface User {
+  id: string;                    // Google user ID
+  name: string;                  // Full name
+  email: string;                 // Email address
+  picture: string;               // Avatar URL
+  given_name?: string;           // First name
+  family_name?: string;          // Last name
+}
+```
+
+### Note Model
+
+```typescript
+interface Note {
+  id: string;                    // Unique note ID
+  title: string;                 // Note title
+  content: string;               // Rich text content (JSON)
+  tag: string;                   // Primary tag
+  tagColor?: string;             // Tag color hex
+  date: string;                  // Creation date
+  modifiedAt?: string;           // Last modification
+  references?: {
+    outgoing: string[];          // IDs of mentioned notes
+    incoming: string[];          // IDs that mention this note
+  };
+  blocks?: Block[];              // Block-level content
+}
+
+interface Block {
+  id: string;                    // Block unique ID
+  type: 'paragraph' | 'heading' | 'blockquote' | 'list';
+  content: string;               // Block content
+}
+```
+
+### ViewState
+
+```typescript
+type ViewState = 'HOME' | 'LIST' | 'EDITOR';
+```
+
+---
+
+## 🔌 Key Services & Integrations
+
+### 1. **Google OAuth (useAuth.ts)**
+
+**Purpose**: Manage Google authentication flow
+
+```typescript
+// Scopes requested:
+- openid
+- profile
+- email
+- https://www.googleapis.com/auth/drive.appdata
+- https://www.googleapis.com/auth/drive.file
+```
+
+**Flow**:
+1. Detect platform (web/android)
+2. Build appropriate redirect URI
+3. Request OAuth token with Google
+4. Save token to secure storage
+5. Fetch user profile
+6. Update UserContext
+
+**Platform Support**:
+- Web: Redirect to `{origin}/login`
+- Android: Deep link via `orbitalnote://login`
+
+---
+
+### 2. **Google Drive Sync (sincronizarWithDrive.ts)**
+
+**Purpose**: Synchronize notes between devices via Google Drive
+
+**Key Functions**:
+
+| Function | Purpose |
+|----------|---------|
+| `subirArchivoADrive()` | Upload/update note file to Drive |
+| `buscarArchivoPorNombre()` | Find existing note file |
+| `googleApiFetch()` | Authenticated fetch wrapper |
+| `getValidAccessToken()` | Get valid token or throw error |
+
+**Sync Strategy**:
+- Create/update JSON files in Drive
+- Search by filename (note ID)
+- Handle token expiration (401 -> logout)
+- Bi-directional sync with AsyncStorage
+
+---
+
+### 3. **Token Storage (tokenStorage.ts)**
+
+**Purpose**: Secure token persistence
+
+**Storage Keys**:
+- `google_access_token` - OAuth access token
+- `google_token_expiry` - Expiration timestamp
+- `google_user` - User profile JSON
+
+**Features**:
+- Auto-expiration handling
+- Encrypted storage (native platform)
+- Cross-platform compatibility
+
+---
+
+## 🎨 UI Component Hierarchy
+
+### Navigation Structure
+
+```
+RootLayout
+├── <Redirect> (if not authenticated)
+├── LoginStack
+│   └── login.tsx
+│       ├── Google OAuth button
+│       └── Loading indicator
+│
+└── AppStack (authenticated)
+    ├── _layout (App shell)
+    │   ├── FloatingNavBar (bottom tabs)
+    │   └── GlobalNotesSidebar (side panel)
+    │
+    ├── index.tsx (Home)
+    │   └── HomeView
+    │       ├── Featured notes
+    │       └── Recent notes
+    │
+    ├── listview.tsx (All Notes)
+    │   └── ListView
+    │       ├── Search/filter
+    │       ├── Notes list
+    │       └── Tag navigation
+    │
+    ├── editorview.tsx (Editor)
+    │   ├── WebEditor (web) | TenTap (mobile)
+    │   ├── TextEditorToolbar
+    │   ├── MentionSuggestions
+    │   └── Save modal
+    │
+    ├── Viewnote.tsx (Detail)
+    │   ├── Note content
+    │   ├── MentionNavigationButtons
+    │   └── Tag display
+    │
+    └── menu.tsx (Menu)
+        ├── Settings
+        └── LogoutModal
+```
+
+---
+
+## 🛠️ Tech Stack Details
+
+| Category | Technology | Purpose |
+|----------|-----------|---------|
+| **Runtime** | Expo 54.0+ | Cross-platform mobile framework |
+| **Language** | TypeScript 5+ | Type-safe development |
+| **Navigation** | Expo Router | File-based routing |
+| **State** | React Context API | User & theme state |
+| **Storage** | AsyncStorage | Local persistent storage |
+| **Auth** | Google OAuth 2.0 | Authentication |
+| **Cloud** | Google Drive API v3 | Cloud synchronization |
+| **Editors** | TipTap (web)<br>TenTap (mobile) | Rich text editing |
+| **UI** | React Native | Native UI components |
+| **Icons** | @expo/vector-icons | Icon library |
+| **Safe Area** | react-native-safe-area-context | Screen safe zone |
+
+---
+
+## 🚀 Running the Application
+
+### Development Setup
 
 ```bash
-# Clone the repository
-git clone https://github.com/vxeque/orbital-note.git
-cd orbital-note
-
 # Install dependencies
 npm install
 
-# or using yarn
-yarn install
+# Start development server
+npm run start
 ```
 
-## Environment Configuration
+### Platform-Specific Commands
 
-Create a `.env.local` file in the project root with the following variables:
+```bash
+# Web platform
+npm run web
 
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` | Google OAuth Client ID for web | `123456789.apps.googleusercontent.com` |
-| `EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID` | Google OAuth Client ID for Android | `123456789-android.apps.googleusercontent.com` |
+# Android platform
+npm run android
 
-### Example `.env.local`
+# iOS platform
+npm run ios
+
+# Lint code
+npm run lint
+
+# Reset project (clear cache)
+npm run reset-project
+```
+
+### Build for Production
+
+```bash
+# Web build
+npm run build:web
+
+# Android production (requires signing keys)
+npm run build:android
+```
+
+---
+
+## 🔐 Environment Configuration
+
+Create a `.env.local` file:
 
 ```env
 EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID=your-web-client-id.apps.googleusercontent.com
 EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID=your-android-client-id.apps.googleusercontent.com
 ```
 
-> ⚠️ **Security Note**: Never commit `.env.local` to version control. Use `.env.example` for documentation.
+Required Google Cloud Project setup:
+1. Enable Google Drive API
+2. Create OAuth 2.0 credentials (Web + Android)
+3. Configure authorized redirect URIs
+4. Download OAuth keys
 
-## Running the Application
+---
 
-### Start Development Server
+## 📋 Requirements
 
-```bash
-npm run start
+- Node.js 20.x
+- npm 10.x or yarn
+- Expo CLI 54+
+- Android Studio (for Android development)
+- Google Cloud Project with OAuth credentials
+
+---
+
+## 🔄 Data Persistence Strategy
+
+### Local Storage (AsyncStorage)
+
+**Keys**:
+- `orbital-notes` - All notes JSON array
+- `orbital-tags` - Tag definitions
+- `google_user` - User profile
+- `google_access_token` - OAuth token
+
+**Sync Pattern**:
+1. Load from AsyncStorage on app start
+2. Cache in React Context
+3. Optional: Sync with Google Drive on changes
+
+### Google Drive Sync
+
+**File Structure**:
+```
+Google Drive (AppData folder)
+├── orbital-notes.json         # Notes collection
+├── orbital-tags.json          # Tags metadata
+└── orbital-user-config.json   # User preferences
 ```
 
-### Web Platform
+**Sync Triggers**:
+- After note creation/update
+- User logout (backup)
+- Manual sync request
+- App startup (if logged in)
 
-```bash
-npm run web
+---
+
+## 🎯 Key Design Patterns
+
+### 1. **Provider Pattern** (React Context)
+
+```typescript
+// Wrap entire app with providers
+<UserProvider>
+  <ThemeProvider>
+    <SafeAreaProvider>
+      {/* App content */}
+    </SafeAreaProvider>
+  </ThemeProvider>
+</UserProvider>
 ```
 
-Access at `http://localhost:8081`
+### 2. **Custom Hooks Pattern**
 
-### Android Platform
-
-```bash
-npm run android
+```typescript
+- useAuth() - Handle Google OAuth
+- useTheme() - Theme management
+- useColorScheme() - Dark/light mode
+- useUser() - User context access
 ```
 
-Requires Android emulator or connected device.
+### 3. **Service Pattern**
 
-### Linting
-
-```bash
-npm run lint
+Encapsulate external integrations:
+```typescript
+- authenticateWithGoogle()
+- subirArchivoADrive()
+- getAccessToken()
 ```
 
-### Reset Project
+### 4. **Configuration Pattern**
 
-```bash
-npm run reset-project
+```typescript
+// constants/theme.ts
+// services/auth/useAuth.ts (client IDs, scopes)
 ```
 
-Clears cache and rebuilds the project.
+---
 
-## Project Structure
-
-```
-orbital-note/
-├── app/                     # Expo Router pages and routing
-│   ├── (auth)/              # Authentication stack
-│   ├── (app)/               # Main application stack
-│   └── index.tsx            # Entry point
-├── src/
-│   ├── components/          # Reusable React components
-│   ├── hooks/               # Custom React hooks
-│   ├── services/            # External service integrations
-│   │   ├── auth/            # Google OAuth logic
-│   │   └── drive/           # Google Drive API
-│   ├── utils/               # Utility functions
-│   ├── types/               # TypeScript type definitions
-│   └── constants/           # App constants
-├── assets/                  # Images, fonts, static files
-├── .env.local               # Local environment variables (git-ignored)
-├── .env.example             # Environment template
-├── tsconfig.json            # TypeScript configuration
-├── app.json                 # Expo configuration
-└── package.json             # Dependencies
-```
-
-## Authentication & Sync Flow
-
-### Authentication Flow
+## 🔍 Component Communication
 
 ```
-1. User opens app → Check stored token
-2. No token → Show login screen
-3. User taps "Login with Google"
+Global State (UserContext)
+        │
+        ├─ useUser() hook
+        │
+        └─ accessed by:
+           ├ _layout.tsx (routing logic)
+           ├ useAuth.ts (auth state updates)
+           └ all components (user data)
+
+Theme State (useTheme hook)
+        │
+        └─ accessed by:
+           ├ Layout components
+           └ styled components
+```
+
+---
+
+## 📱 Cross-Platform Considerations
+
+### Web-Specific
+- OAuth redirect: `http://localhost:8081/login`
+- Editors: TipTap for rich editing
+- No native APIs needed
+
+### Android-Specific
+- OAuth scheme: `orbitalnote://`
+- Editor: TenTap for mobile
+- Native: file system, permissions
+- Gradle-based build process
+
+### Adaptive UI
+- `Platform.OS` checks for conditionals
+- `.web.ts` / `.native.ts` file suffixes
+- SafeAreaView for notches/cutouts
+
+---
+
+## 🧪 Testing Architecture
+
+```
+Components
+├─ Presentational (stateless)
+├─ Container (stateful, logic)
+└─ Integration
+
+Services
+├─ Auth service (mocked in tests)
+├─ Drive sync (mocked in tests)
+└─ Token storage (mocked in tests)
+
+Hooks
+├─ useAuth (test OAuth flow)
+├─ useTheme (test theme switching)
+└─ useUser (test context)
+```
+
+---
+
+## 📈 Future Extensibility
+
+### Planned Features (Architecture-Ready)
+-  Offline-first sync queue
+-  Notes analytics dashboard
+-  AI-powered note suggestions
+-  Custom theme builder
+-  Note templates
+-  Full-text search
+
+### Extension Points
+- Add new editor (e.g., Markdown)
+- New cloud provider (AWS S3, Firebase)
+- Additional auth (GitHub, Microsoft)
+- Rich media (images, videos in notes)
 4. expo-auth-session redirects to Google OAuth
 5. User grants permissions
 6. Token stored in expo-secure-store
