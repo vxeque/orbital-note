@@ -1,15 +1,14 @@
+import { sincronizarConDrive } from '@/services/sincronizarWithDrive';
 import React, { useState } from 'react';
 import {
-  Modal,
-  View,
-  Text,
-  Image,
-  TouchableOpacity,
-  ActivityIndicator,
-  StyleSheet,
-  Animated,
+    ActivityIndicator,
+    Image,
+    Modal,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View
 } from 'react-native';
-import { sincronizarConDrive } from '@/services/sincronizarWithDrive';
 
 const SaveToDriveModal = ({ visible, onClose }) => {
   const [estado, setEstado] = useState('idle'); // idle | loading | success | error
@@ -125,7 +124,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   card: {
-    backgroundColor: '#101010',
+    backgroundColor: '#000',
     borderRadius: 20,
     padding: 28,
     width: '100%',

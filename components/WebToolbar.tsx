@@ -17,7 +17,7 @@ const WebToolbar: React.FC<WebToolbarProps> = ({ isDark, onSave }) => {
     return () => window.removeEventListener("resize", updateCompact);
   }, []);
 
-  const bgColor = isDark ? "#1a1a1a" : "#f5f5f5";
+  const bgColor = isDark ? "#000" : "#f5f5f5";
   const textColor = isDark ? "#ffffff" : "#000000";
   const borderColor = isDark ? "#333" : "#ddd";
 

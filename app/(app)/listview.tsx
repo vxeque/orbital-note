@@ -1,24 +1,24 @@
 import { FontAwesome } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
-  StyleSheet,
-  TouchableOpacity,
-  Text,
-  TextInput,
-  View,
-  SectionList,
-  Platform,
-  Image
+    Image,
+    Platform,
+    SectionList,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Note } from '@/types/types';
 import { getTagBadgeStyle } from '@/utils/tagColors';
 
-import { useUser } from '@/context/UserContext'
+import { useUser } from '@/context/UserContext';
 
 // import LogoutModal from '@/components/modal/logout/logoutModal'; '@/components/modal/logout/logoutModal';
 import LogoutModal from '@/components/modal/logout/LogoutModal';
@@ -524,7 +524,7 @@ const styles = StyleSheet.create({
     zIndex: 1000,
   },
   menuContainer: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#000',
     borderRadius: 12,
     padding: 8,
     minWidth: 180,

@@ -1,15 +1,15 @@
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useTheme } from "@/hooks/use-theme";
 import { FontAwesome } from "@expo/vector-icons";
 import { usePathname, useRouter } from "expo-router";
 import React from "react";
 import {
-  Platform,
-  StyleSheet,
-  TouchableOpacity,
+    Platform,
+    StyleSheet,
+    TouchableOpacity,
 } from "react-native";
 import Animated, { FadeInDown, ZoomIn } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useTheme } from "@/hooks/use-theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
 
 export default function FloatingNavBar() {
   const router = useRouter();
@@ -42,7 +42,7 @@ export default function FloatingNavBar() {
         {
           bottom: insets.bottom + 16,
           backgroundColor: isDark
-            ? "#101010"
+            ? "#000"
             : "rgba(248, 248, 250, 0.62)",
           borderColor: isDark
             ? "rgba(255, 255, 255, 0.12)"

@@ -9,9 +9,9 @@ interface HomeViewProps {
 
 const HomeView: React.FC<HomeViewProps> = ({ onNavigateToList, onNavigateToNew, isDark = true }) => {
   const isDarkTheme = isDark ?? true;
-  const bgColor = isDarkTheme ? '#101010' : '#ffffff';
+  const bgColor = isDarkTheme ? '#000' : '#ffffff';
   const textColor = isDarkTheme ? '#ffffff' : '#000000';
-  const cardBgColor = isDarkTheme ? '#1a1a1a' : '#f0f0f0';
+  const cardBgColor = isDarkTheme ? '#000' : '#f0f0f0';
   const borderColor = isDarkTheme ? '#333333' : '#e0e0e0';
 
   return (

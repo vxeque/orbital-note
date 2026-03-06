@@ -1,8 +1,8 @@
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import { FontAwesome } from '@expo/vector-icons';
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View, } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useColorScheme } from '@/hooks/use-color-scheme';
 
 export default function Menu() {
   const colorScheme = useColorScheme();
@@ -24,7 +24,7 @@ export default function Menu() {
   const styles = StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: isDark ? '#101010' : '#ffffff',
+      backgroundColor: isDark ? '#000' : '#ffffff',
     },
     menuContainer: {
       paddingHorizontal: 16,
@@ -36,7 +36,7 @@ export default function Menu() {
       paddingHorizontal: 16,
       paddingVertical: 14,
       marginVertical: 8,
-      backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5',
+      backgroundColor: isDark ? '#000' : '#f5f5f5',
       borderRadius: 8,
     },
     menuLabel: {

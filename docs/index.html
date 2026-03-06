@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="Orbital Note - A modern note-taking app with Google Drive sync and rich text editing">
+    <title>Orbital Note - Documentation & Blog</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" href="./icon.png" type="image/x-icon">
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <div class="navbar-brand">
+                <span class="logo"><img src="./icon.png" alt="Orbital Note Logo" width="30" height="30"></span>
+                <span class="brand-name">Orbital Note</span>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="#home" class="nav-link active" data-i18n="nav.blog">Blog</a></li>
+                <li><a href="docs.html" class="nav-link" data-i18n="nav.documentation">Documentación</a></li>
+                <li>
+                    <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+                        <span class="theme-icon">🌙</span>
+                    </button>
+                </li>
+                <li>
+                    <button id="languageToggle" class="language-toggle" aria-label="Toggle language">
+                        EN
+                    </button>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero" id="home">
+        <div class="hero-content">
+            <h1 data-i18n="hero.title">Orbital Note</h1>
+            <p class="hero-subtitle" data-i18n="hero.subtitle">Una forma moderna de capturar tus ideas, sincronizadas en
+                todos tus dispositivos</p>
+            <div class="hero-buttons">
+                <a href="docs.html" class="btn btn-primary" data-i18n="hero.btn-docs">Leer Documentación</a>
+                <a href="https://github.com/vxeque/orbital-note" class="btn btn-secondary" target="_blank"
+                    data-i18n="hero.btn-github">Ver en GitHub</a>
+            </div>
+            <div class="hero-image">
+                <div class="mockup">
+                    <img src="./image-2.png" alt="Orbital Note Mockup"
+                        style="width: 100%; max-width: 500px; height: auto;">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Highlight -->
+    <section class="features" id="features">
+        <div class="container">
+            <h2 data-i18n="features.title">Características Principales</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🔐</div>
+                    <h3 data-i18n="features.security-title">Autenticación Segura</h3>
+                    <p data-i18n="features.security-desc">Login con Google OAuth 2.0, tokens seguros y sincronización
+                        segura</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">☁️</div>
+                    <h3 data-i18n="features.cloud-title">Sincronización en la Nube</h3>
+                    <p data-i18n="features.cloud-desc">Google Drive sync automático, accede a tus notas desde cualquier
+                        dispositivo</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📝</div>
+                    <h3 data-i18n="features.editor-title">Editor de Texto Enriquecido</h3>
+                    <p data-i18n="features.editor-desc">TipTap en web, TenTap en móvil, con formato y colorido</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🎯</div>
+                    <h3 data-i18n="features.multiplatform-title">Multiplataforma</h3>
+                    <p data-i18n="features.multiplatform-desc">Android y Web nativos, misma experiencia en todos lados
+                    </p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🏷️</div>
+                    <h3 data-i18n="features.tags-title">Etiquetas y Colores</h3>
+                    <p data-i18n="features.tags-desc">Organiza tus notas con etiquetas personalizables y códigos de
+                        color</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔗</div>
+                    <h3 data-i18n="features.references-title">Referencias entre Notas</h3>
+                    <p data-i18n="features.references-desc">Crea conexiones entre notas con menciones y referencias
+                        cruzadas</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Blog Section -->
+    <section class="blog-section">
+        <div class="container">
+            <h2 data-i18n="blog.title">Blog & Noticias</h2>
+            <div class="blog-posts">
+                <!-- Post 1 -->
+                <article class="blog-post">
+                    <div class="post-header">
+                        <h3 data-i18n="blog.post1-title">Introducción a Orbital Note v1.0.0</h3>
+                        <div class="post-meta">
+                            <span class="date" data-i18n="blog.post1-date">5 de Marzo, 2026</span>
+                            <span class="author" data-i18n="blog.post1-author">Equipo Orbital</span>
+                        </div>
+                    </div>
+                    <div class="post-content">
+                        <p data-i18n="blog.post1-content">¡Nos complace anunciar el lanzamiento oficial de <strong>Orbital Note v1.0.0</strong>!
+                            después de meses de desarrollo, hemos creado la aplicación perfecta para capturar y
+                            sincronizar tus ideas.</p>
+                        <p data-i18n="blog.post1-features">Esta primer versión incluye todas las características fundamentales:</p>
+                        <ul>
+                            <li>Autenticación Google OAuth segura</li>
+                            <li>Sincronización bidireccional con Google Drive</li>
+                            <li>Editor de texto enriquecido multiplataforma</li>
+                            <li>Sistema de etiquetas y referencias</li>
+                            <li>Soporte para Android y Web</li>
+                        </ul>
+                    </div>
+                    <a href="#" class="read-more" data-i18n="blog.read-more">Leer más →</a>
+                </article>
+
+                <!-- Post 2 -->
+                <article class="blog-post">
+                    <div class="post-header">
+                        <h3 data-i18n="blog.post2-title">Arquitectura Modular: Cómo Escalamos Orbital Note</h3>
+                        <div class="post-meta">
+                            <span class="date" data-i18n="blog.post2-date">3 de Marzo, 2026</span>
+                            <span class="author" data-i18n="blog.post2-author">Arquitectura</span>
+                            <span class="category" data-i18n="blog.post2-category">Técnico</span>
+                        </div>
+                    </div>
+                    <div class="post-content">
+                        <p data-i18n="blog.post2-content">Uno de nuestros mayores logros en el desarrollo de Orbital Note fue crear una arquitectura
+                            escalable y mantenible. Utilizamos un enfoque <strong>modular basado en
+                                características</strong> que separa claramente las responsabilidades.</p>
+                        <p data-i18n="blog.post2-architecture">Nuestra arquitectura consta de varias capas:</p>
+                        <ul>
+                            <li><strong>Router</strong> - Expo Router para navegación</li>
+                            <li><strong>Presentación</strong> - Componentes React Native</li>
+                            <li><strong>Estado</strong> - React Context API</li>
+                            <li><strong>Lógica de Negocio</strong> - Servicios especializados</li>
+                            <li><strong>Datos</strong> - AsyncStorage + Google Drive API</li>
+                        </ul>
+                    </div>
+                    <a href="docs.html" class="read-more" data-i18n="blog.view-docs">Ver Documentación →</a>
+                </article>
+
+                <!-- Post 3 -->
+                <article class="blog-post">
+                    <div class="post-header">
+                        <h3 data-i18n="blog.post3-title">Sincronización Google Drive: Cómo Funciona</h3>
+                        <div class="post-meta">
+                            <span class="date" data-i18n="blog.post3-date">1 de Marzo, 2026</span>
+                            <span class="author" data-i18n="blog.post3-author">Backend</span>
+                            <span class="category" data-i18n="blog.post3-category">Tutorial</span>
+                        </div>
+                    </div>
+                    <div class="post-content">
+                        <p data-i18n="blog.post3-content">La sincronización con Google Drive es el corazón de Orbital Note. Permite a los usuarios
+                            acceder a sus notas desde cualquier dispositivo, en cualquier momento.</p>
+                        <p data-i18n="blog.post3-system">El sistema funciona así:</p>
+                        <ol>
+                            <li>El usuario crea/edita una nota localmente</li>
+                            <li>La nota se guarda en AsyncStorage del dispositivo</li>
+                            <li>Se dispara un job de sincronización en background</li>
+                            <li>Se autentica con Google usando el token guardado</li>
+                            <li>Se carga/actualiza la nota en Google Drive</li>
+                            <li>Se resuelven conflictos (última escritura gana)</li>
+                        </ol>
+                    </div>
+                    <a href="#" class="read-more" data-i18n="blog.read-more">Leer más →</a>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <!-- Tech Stack -->
+    <section class="tech-stack">
+        <div class="container">
+            <h2 data-i18n="tech.title">Tech Stack</h2>
+            <div class="tech-grid">
+                <div class="tech-item">
+                    <h4 data-i18n="tech.frontend">Frontend</h4>
+                    <ul>
+                        <li>React Native</li>
+                        <li>Expo 54+</li>
+                        <li>TypeScript</li>
+                        <li>Expo Router</li>
+                    </ul>
+                </div>
+                <div class="tech-item">
+                    <h4 data-i18n="tech.editors">Editors</h4>
+                    <ul>
+                        <li>TipTap (Web)</li>
+                        <li>TenTap (Mobile)</li>
+                        <li>Rich Text Extensions</li>
+                    </ul>
+                </div>
+                <div class="tech-item">
+                    <h4 data-i18n="tech.backend">Backend & Cloud</h4>
+                    <ul>
+                        <li>Google OAuth 2.0</li>
+                        <li>Google Drive API v3</li>
+                        <li>AsyncStorage</li>
+                    </ul>
+                </div>
+                <div class="tech-item">
+                    <h4 data-i18n="tech.state">Estado & UI</h4>
+                    <ul>
+                        <li>React Context</li>
+                        <li>Dark/Light Mode</li>
+                        <li>Responsive Design</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <div class="container">
+            <h2 data-i18n="cta.title">¿Listo para Comenzar?</h2>
+            <p data-i18n="cta.subtitle">Explora la documentación completa o instala Orbital Note ahora</p>
+            <div class="cta-buttons">
+                <a href="docs.html" class="btn btn-primary btn-lg" data-i18n="cta.btn-docs">Ver Documentación</a>
+                <a href="https://github.com/tu-usuario/orbital-note" class="btn btn-secondary btn-lg"
+                    target="_blank" data-i18n="cta.btn-github">GitHub</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer" id="contact">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-column">
+                    <h4>Orbital Note</h4>
+                    <p data-i18n="footer.description">Una forma moderna de capturar tus ideas</p>
+                    <div class="social-links">
+                        <a href="https://github.com/tu-usuario/orbital-note" aria-label="GitHub">GitHub</a>
+                        <a href="https://twitter.com" aria-label="Twitter">Twitter</a>
+                    </div>
+                </div>
+                <div class="footer-column">
+                    <h4 data-i18n="footer.documentation">Documentación</h4>
+                    <ul>
+                        <li><a href="docs.html" data-i18n="footer.full-guide">Guía Completa</a></li>
+                        <li><a href="docs.html#architecture" data-i18n="footer.architecture">Arquitectura</a></li>
+                        <li><a href="docs.html#setup" data-i18n="footer.setup">Setup</a></li>
+                        <li><a href="docs.html#contributing" data-i18n="footer.contributing">Contribuir</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h4 data-i18n="footer.community">Comunidad</h4>
+                    <ul>
+                        <li><a href="https://github.com/vxeque/orbital-note/issues" data-i18n="footer.issues">Issues</a></li>
+                        <li><a href="https://github.com/vxeque/orbital-note/discussions" data-i18n="footer.discussions">Discussions</a></li>
+                    </ul>
+                </div>
+                <!-- <div class="footer-column">
+                    <h4>Legal</h4>
+                    <ul>
+                        <li><a href="#">Privacidad</a></li>
+                        <li><a href="#">Términos</a></li>
+                        <li><a href="#">Licencia MIT</a></li>
+                    </ul>
+                </div> -->
+            </div>
+            <div class="footer-bottom">
+                <p data-i18n="footer.copyright">&copy; 2026 Orbital Note. Hecho con ❤️ para la comunidad open source</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="i18n.js"></script>
+    <script src="script.js"></script>
+</body>
+
+</html>

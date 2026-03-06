@@ -10,9 +10,9 @@ interface ListViewProps {
 
 const ListView: React.FC<ListViewProps> = ({ notes, onNoteClick, isDark = true }) => {
   const isDarkTheme = isDark ?? true;
-  const bgColor = isDarkTheme ? '#101010' : '#ffffff';
+  const bgColor = isDarkTheme ? '#000' : '#ffffff';
   const textColor = isDarkTheme ? '#ffffff' : '#000000';
-  const cardBgColor = isDarkTheme ? '#1a1a1a' : '#f5f5f5';
+  const cardBgColor = isDarkTheme ? '#000' : '#f5f5f5';
   const borderColor = isDarkTheme ? '#333333' : '#e0e0e0';
   const subtextColor = isDarkTheme ? '#999999' : '#666666';
 

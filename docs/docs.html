@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Documentación completa de Orbital Note">
+    <title>Documentación - Orbital Note</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" href="./icon.png" type="image/x-icon">
+
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <div class="navbar-brand">
+                <a href="index.html"
+                    style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 8px;">
+                    <span class="logo"><img src="./icon.png" width="30" height="30"></span>
+                    <span class="brand-name">Orbital Note</span>
+                </a>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="index.html" class="nav-link" data-i18n="nav.blog">Blog</a></li>
+                <li><a href="docs.html" class="nav-link active" data-i18n="nav.documentation">Documentación</a></li>
+                <li>
+                    <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+                        <span class="theme-icon">🌙</span>
+                    </button>
+                </li>
+                <li>
+                    <button id="languageToggle" class="language-toggle" aria-label="Toggle language">
+                        EN
+                    </button>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Documentation Layout -->
+    <div class="docs-container">
+        <!-- Sidebar -->
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <h3 data-i18n="docs.sidebar-title">Documentación</h3>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="#overview" class="sidebar-link" data-i18n="docs.overview">Descripción General</a></li>
+                    <li><a href="#features" class="sidebar-link" data-i18n="docs.features">Características</a></li>
+                    <li>
+                        <span class="sidebar-section" data-i18n="docs.architecture-section">Arquitectura</span>
+                        <ul>
+                            <li><a href="#architecture" class="sidebar-link"
+                                    data-i18n="docs.architecture-overview">Visión General</a></li>
+                            <li><a href="#data-flow" class="sidebar-link" data-i18n="docs.data-flow">Flujo de Datos</a>
+                            </li>
+                        </ul>
+                    </li>
+                    <li>
+                        <span class="sidebar-section" data-i18n="docs.setup-section">Setup</span>
+                        <ul>
+                            <li><a href="#setup" class="sidebar-link" data-i18n="docs.installation">Instalación</a></li>
+                            <li><a href="#environment" class="sidebar-link" data-i18n="docs.environment">Variables de
+                                    Entorno</a></li>
+                            <li><a href="#oauth" class="sidebar-link" data-i18n="docs.oauth">Google OAuth</a></li>
+                        </ul>
+                    </li>
+                    <li>
+                        <span class="sidebar-section" data-i18n="docs.development">Desarrollo</span>
+                        <ul>
+                            <li><a href="#tech-stack" class="sidebar-link" data-i18n="docs.tech-stack">Tech Stack</a>
+                            </li>
+                            <li><a href="#contributing" class="sidebar-link"
+                                    data-i18n="docs.contributing">Contribuir</a></li>
+                            <li><a href="#security" class="sidebar-link" data-i18n="docs.security">Seguridad</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="docs-content">
+            <!-- Overview -->
+            <section id="overview" class="doc-section">
+                <h1 data-i18n="docs.title">Orbital Note</h1>
+                <p class="doc-intro" data-i18n="docs.intro">Una aplicación multiplataforma de toma de notas
+                    sincronizadas en la nube, con autenticación segura mediante Google OAuth y sincronización automática
+                    con Google Drive.</p>
+
+                <h2 data-i18n="docs.what-is">¿Qué es Orbital Note?</h2>
+                <p data-i18n="docs.what-is-desc">Orbital Note es una aplicación moderna de notas que te permite:</p>
+                <ul class="feature-list">
+                    <li data-i18n="docs.feature1"><strong>Capturar ideas rápidamente</strong> con un editor de texto
+                        enriquecido</li>
+                    <li data-i18n="docs.feature2"><strong>Sincronizar automáticamente</strong> tus notas en Google Drive
+                    </li>
+                    <li data-i18n="docs.feature3"><strong>Acceder desde cualquier dispositivo</strong> (Android y Web)
+                    </li>
+                    <li data-i18n="docs.feature4"><strong>Organizar tus notas</strong> con etiquetas y referencias
+                        cruzadas</li>
+                    <li data-i18n="docs.feature5"><strong>Disfrutar de una interfaz moderna</strong> con soporte
+                        dark/light mode</li>
+                </ul>
+            </section>
+
+            <!-- Features -->
+            <section id="features" class="doc-section">
+                <h2 data-i18n="docs.features-title">Características Principales</h2>
+                <div class="features-table">
+                    <div class="feature-item">
+                        <h3 data-i18n="docs.secure-auth">Autenticación Segura</h3>
+                        <p data-i18n="docs.secure-auth-desc">Google OAuth 2.0 para login seguro, sin almacenar
+                            contraseñas. Tokens seguros con expiración automática.</p>
+                    </div>
+                    <div class="feature-item">
+                        <h3 data-i18n="docs.cloud-sync">Sincronización en la Nube</h3>
+                        <p data-i18n="docs.cloud-sync-desc">Tus notas se sincronizan automáticamente a Google Drive.
+                            Accede desde cualquier dispositivo.</p>
+                    </div>
+                    <div class="feature-item">
+                        <h3 data-i18n="docs.rich-editor"> Editor Enriquecido</h3>
+                        <p data-i18n="docs.rich-editor-desc">TipTap en web y TenTap en móvil con formatting, listas,
+                            bloques, imágenes y más.</p>
+                    </div>
+                    <div class="feature-item">
+                        <h3 data-i18n="docs.multiplatform"> Multiplataforma</h3>
+                        <p data-i18n="docs.multiplatform-desc">Android nativo y Web. Misma experiencia consistente en
+                            todos los dispositivos.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Architecture -->
+            <section id="architecture" class="doc-section">
+                <h2 data-i18n="docs.architecture">Arquitectura del Sistema</h2>
+                <p data-i18n="docs.architecture-desc">Orbital Note sigue una <strong>arquitectura modular basada en
+                        características</strong> con claras separación de responsabilidades.</p>
+
+                <h3 data-i18n="docs.architecture-layers">Capas de la Arquitectura</h3>
+                <div class="architecture-diagram">
+                    <div class="layer">
+                        <h4 data-i18n="docs.routing-layer">Capa de Routing</h4>
+                        <p data-i18n="docs.routing-layer-desc">Expo Router - Navegación basada en archivos</p>
+                    </div>
+                    <div class="layer">
+                        <h4 data-i18n="docs.presentation-layer">Capa de Presentación</h4>
+                        <p data-i18n="docs.presentation-layer-desc">Componentes React Native, Hooks personalizados</p>
+                    </div>
+                    <div class="layer">
+                        <h4 data-i18n="docs.state-layer">Capa de Estado</h4>
+                        <p data-i18n="docs.state-layer-desc">React Context (User, Theme) - Gestión de estado global</p>
+                    </div>
+                    <div class="layer">
+                        <h4 data-i18n="docs.business-layer">Capa de Lógica de Negocio</h4>
+                        <p data-i18n="docs.business-layer-desc">Servicios: Auth, Drive Sync, Token Management</p>
+                    </div>
+                    <div class="layer">
+                        <h4 data-i18n="docs.data-layer">Capa de Datos</h4>
+                        <p data-i18n="docs.data-layer-desc">AsyncStorage + Google Drive API - Persistencia</p>
+                    </div>
+                </div>
+
+                <h3 data-i18n="docs.directory-structure">Estructura de Directorios</h3>
+                <div class="code-block">
+                    <pre><code>orbital-note/
+├── app/                    # Páginas de Expo Router
+│   ├── _layout.tsx         # Layout root
+│   ├── (auth)/login.tsx    # Pantalla de login
+│   └── (app)/              # Stack principal
+│
+├── components/             # Componentes reutilizables
+│   ├── TextEditor.tsx
+│   ├── FloatingNavBar.tsx
+│   └── modal/
+│
+├── context/                # React Context
+│   └── UserContext.tsx
+│
+├── services/               # Lógica de negocio
+│   ├── auth/useAuth.ts
+│   ├── tokenStorage.ts
+│   └── sincronizarWithDrive.ts
+│
+├── hooks/                  # Custom Hooks
+│   ├── use-theme.tsx
+│   ├── use-color-scheme.ts
+│   └── use-auth.ts
+│
+└── types/                  # TypeScript types
+    └── types.ts</code></pre>
+                </div>
+            </section>
+
+            <!-- Data Flow -->
+            <section id="data-flow" class="doc-section">
+                <h2 data-i18n="docs.data-flow">Flujo de Datos</h2>
+
+                <h3 data-i18n="docs.auth-flow">1. Flujo de Autenticación</h3>
+                <div class="flow-diagram">
+                    <div class="flow-step" data-i18n="docs.auth-step1">1. Usuario abre la app</div>
+                    <div class="flow-arrow">↓</div>
+                    <div class="flow-step" data-i18n="docs.auth-step2">2. Se verifica token almacenado</div>
+                    <div class="flow-arrow">↓</div>
+                    <div class="flow-step" data-i18n="docs.auth-step3">3. Si no existe, se muestra login</div>
+                    <div class="flow-arrow">↓</div>
+                    <div class="flow-step" data-i18n="docs.auth-step4">4. Google OAuth redirect</div>
+                    <div class="flow-arrow">↓</div>
+                    <div class="flow-step" data-i18n="docs.auth-step5">5. Token guardado securely</div>
+                    <div class="flow-arrow">↓</div>
+                    <div class="flow-step" data-i18n="docs.auth-step6">6. Redirige a app principal</div>
+                </div>
+
+                <h3 data-i18n="docs.note-flow">2. Flujo de Notas</h3>
+                <div class="flow-diagram">
+                    <div class="flow-step" data-i18n="docs.note-step1">Usuario crea/edita nota</div>
+                    <div class="flow-arrow">↓</div>
+                    <div class="flow-step" data-i18n="docs.note-step2">Se guarda en AsyncStorage</div>
+                    <div class="flow-arrow">↓</div>
+                    <div class="flow-step" data-i18n="docs.note-step3">Sincronización a Google Drive</div>
+                    <div class="flow-arrow">↓</div>
+                    <div class="flow-step" data-i18n="docs.note-step4">Se resuelven conflictos</div>
+                    <div class="flow-arrow">↓</div>
+                    <div class="flow-step" data-i18n="docs.note-step5">Nota sincronizada ✓</div>
+                </div>
+            </section>
+
+            <!-- Tech Stack -->
+            <section id="tech-stack" class="doc-section">
+                <h2 data-i18n="docs.tech-stack">Stack Tecnológico</h2>
+                <div class="tech-details">
+                    <div class="tech-category">
+                        <h3 data-i18n="docs.runtime">Runtime & Framework</h3>
+                        <ul>
+                            <li><strong>Expo 54+</strong> - Framework mobile multiplataforma</li>
+                            <li><strong>React Native</strong> - Componentes nativos</li>
+                            <li><strong>TypeScript</strong> - Type-safe development</li>
+                        </ul>
+                    </div>
+                    <div class="tech-category">
+                        <h3 data-i18n="docs.frontend">Frontend & UI</h3>
+                        <ul>
+                            <li><strong>Expo Router</strong> - Navegación file-based</li>
+                            <li><strong>React Context</strong> - State management</li>
+                            <li><strong>@expo/vector-icons</strong> - Iconografía</li>
+                        </ul>
+                    </div>
+                    <div class="tech-category">
+                        <h3 data-i18n="docs.editors">Editors</h3>
+                        <ul>
+                            <li><strong>TipTap</strong> - Editor enriquecido (Web)</li>
+                            <li><strong>TenTap</strong> - Editor móvil (Android)</li>
+                        </ul>
+                    </div>
+                    <div class="tech-category">
+                        <h3 data-i18n="docs.backend">Backend & Cloud</h3>
+                        <ul>
+                            <li><strong>Google OAuth 2.0</strong> - Autenticación</li>
+                            <li><strong>Google Drive API v3</strong> - Sincronización</li>
+                            <li><strong>AsyncStorage</strong> - Almacenamiento local</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Setup -->
+            <section id="setup" class="doc-section">
+                <h2 id="installation" data-i18n="docs.installation">Instalación y Setup</h2>
+
+                <h3 data-i18n="docs.requirements">Requisitos</h3>
+                <ul>
+                    <li>Node.js 20.x</li>
+                    <li>npm 10.x o yarn</li>
+                    <li>Expo CLI 54+</li>
+                    <li>Para Android: Android Studio o SDK</li>
+                </ul>
+
+                <h3 data-i18n="docs.setup-steps">Pasos de Instalación</h3>
+                <div class="code-block">
+                    <pre><code># 1. Clonar repositorio
+git clone https://github.com/tu-usuario/orbital-note.git
+cd orbital-note
+
+# 2. Instalar dependencias
+npm install
+
+# 3. Copiar y configurar variables de entorno
+cp .env.example .env.local
+# Edita .env.local con tus credenciales de Google
+
+# 4. Inicia el servidor de desarrollo
+npm run start
+
+# 5. Para Web
+npm run web
+
+# 6. Para Android
+npm run android</code></pre>
+                </div>
+
+                <h3 id="environment" data-i18n="docs.environment">Variables de Entorno</h3>
+                <p data-i18n="docs.env-create">Crea un archivo <code>.env.local</code> con:</p>
+                <div class="code-block">
+                    <pre><code>EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID=your-web-client-id
+EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID=your-android-client-id</code></pre>
+                </div>
+
+                <h3 id="oauth" data-i18n="docs.oauth-config">Configuración Google OAuth</h3>
+                <ol>
+                    <li>Ve a <a href="https://console.cloud.google.com" target="_blank">Google Cloud Console</a></li>
+                    <li>Crea un nuevo proyecto</li>
+                    <li>Habilita Google Drive API</li>
+                    <li>Crea credenciales OAuth 2.0:
+                        <ul>
+                            <li>Para Web: Autoriza <code>http://localhost:8081/login</code></li>
+                            <li>Para Android: Autoriza con tu package name</li>
+                        </ul>
+                    </li>
+                    <li>Descarga las credenciales y configura en <code>.env.local</code></li>
+                </ol>
+            </section>
+
+            <!-- Contributing -->
+            <section id="contributing" class="doc-section">
+                <h2 data-i18n="docs.contribute-title">Contribuir al Proyecto</h2>
+
+                <h3 data-i18n="docs.contribute-start">Cómo Empezar</h3>
+                <div class="code-block">
+                    <pre><code># 1. Fork el repositorio
+# 2. Crea una rama feature
+git checkout -b feature/tu-feature
+
+# 3. Haz commits con mensajes descriptivos
+git commit -m "feat: agregar nueva funcionalidad"
+
+# 4. Push a tu fork
+git push origin feature/tu-feature
+
+# 5. Abre un Pull Request
+# Describe tus cambios claramente</code></pre>
+                </div>
+
+                <h3 data-i18n="docs.code-standards">Estándares de Código</h3>
+                <ul>
+                    <li><strong>TypeScript obligatorio</strong> - Sin any types</li>
+                    <li><strong>Linting</strong> - Ejecuta <code>npm run lint</code></li>
+                    <li><strong>Commits</strong> - Usa conventional commits (feat:, fix:, etc.)</li>
+                    <li><strong>JSDoc</strong> - Documenta funciones públicas</li>
+                </ul>
+
+                <h3 data-i18n="docs.naming-conventions">Convenciones de Nombres</h3>
+                <ul>
+                    <li>Componentes: <code>PascalCase</code> (UserButton.tsx)</li>
+                    <li>Funciones: <code>camelCase</code> (getUserData)</li>
+                    <li>Archivos web: <code>kebab-case</code> (user-service.ts)</li>
+                    <li>Constantes: <code>UPPER_SNAKE_CASE</code> (MAX_TIMEOUT)</li>
+                </ul>
+            </section>
+
+            <!-- Security -->
+            <section id="security" class="doc-section">
+                <h2 data-i18n="docs.security-title">Seguridad</h2>
+
+                <h3 data-i18n="docs.security-measures">Medidas de Seguridad Implementadas</h3>
+                <ul class="security-list">
+                    <li>
+                        <strong>OAuth 2.0</strong> - No almacenamos contraseñas
+                    </li>
+                    <li>
+                        <strong>Token Encryption</strong> - Tokens guardados con encryption nativa
+                    </li>
+                    <li>
+                        <strong>Google Drive Scopes Limitados</strong> - Solo permisos necesarios
+                    </li>
+                    <li>
+                        <strong>Input Validation</strong> - DOMPurify para sanitizar HTML
+                    </li>
+                    <li>
+                        <strong>HTTPS Enforced</strong> - En producción
+                    </li>
+                </ul>
+
+                <h3 data-i18n="docs.report-vulnerabilities">Reportar Vulnerabilidades</h3>
+                <p data-i18n="docs.vulnerability-notice">Si encuentras una vulnerabilidad de seguridad,
+                    no abras un issue público. En su lugar:
+                </p>
+                <p data-i18n="docs.vulnerability-email">Envía un email a vxeque@gmail.com con detalles
+                    de la vulnerabilidad.</p>
+
+                <h3 data-i18n="docs.best-practices">Buenas Prácticas</h3>
+                <ul>
+                    <li>Nunca commites secretos o credenciales</li>
+                    <li>Usa variables de entorno para configuración sensible</li>
+                    <li>Revisa dependencias regularmente</li>
+                    <li>Mantén las librerías actualizadas</li>
+                </ul>
+            </section>
+
+            <!-- Support -->
+            <section id="support" class="doc-section">
+                <h2 data-i18n="docs.support-title">Soporte & Recursos</h2>
+
+                <h3 data-i18n="docs.need-help">¿Necesitas Ayuda?</h3>
+                <div class="support-grid">
+                    <div class="support-card">
+                        <h4 data-i18n="docs.report-bugs">🐛 Reportar Bugs</h4>
+                        <p><a href="https://github.com/vxeque/orbital-note/issues" target="_blank"
+                                data-i18n="docs.bugs-link">Abre un issue en GitHub</a></p>
+                    </div>
+                    <div class="support-card">
+                        <h4 data-i18n="docs.questions">💬 Preguntas</h4>
+                        <p><a href="https://github.com/vxeque/orbital-note/discussions" target="_blank"
+                                data-i18n="docs.questions-link">Inicia una discusión</a></p>
+                    </div>
+                    <div class="support-card">
+                        <h4 data-i18n="docs.suggestions">✨ Sugerencias</h4>
+                        <p><a href="https://github.com/vxeque/orbital-note/discussions" target="_blank"
+                                data-i18n="docs.suggestions-link">Propón una feature</a></p>
+                    </div>
+                    <div class="support-card">
+                        <h4 data-i18n="docs.docs">📚 Docs</h4>
+                        <p data-i18n="docs.docs-desc">Lee esta documentación completa</p>
+                    </div>
+                </div>
+
+                <h3 data-i18n="docs.useful-links">Links Útiles</h3>
+                <ul>
+                    <li><a href="https://docs.expo.dev" target="_blank">Expo Documentation</a></li>
+                    <li><a href="https://reactnative.dev" target="_blank">React Native Docs</a></li>
+                    <li><a href="https://developers.google.com" target="_blank">Google APIs</a></li>
+                    <li><a href="https://github.com/vxeque/orbital-note" target="_blank">GitHub Repository</a></li>
+                </ul>
+            </section>
+        </main>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-column">
+                    <h4>Orbital Note</h4>
+                    <p>Documentación & Blog</p>
+                </div>
+                <div class="footer-column">
+                    <h4 data-i18n="footer.documentation">Links</h4>
+                    <ul>
+                        <li><a href="index.html" data-i18n="footer.blog">Blog</a></li>
+                        <li><a href="https://github.com/vxeque/orbital-note">GitHub</a></li>
+                        <li><a href="https://github.com/vxeque/orbital-note/issues" data-i18n="footer.issues">Issues</a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h4>Legal</h4>
+                    <ul>
+                        <li><a href="#" data-i18n="footer.license">Licencia MIT</a></li>
+                        <li><a href="#">Privacidad</a></li>
+                        <li><a href="#">Términos</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p data-i18n="docs.footer-copyright">&copy; 2026 Orbital Note. Licencia MIT</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="i18n.js"></script>
+    <script src="script.js"></script>
+</body>
+
+</html>
