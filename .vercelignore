@@ -1,0 +1,21 @@
+# Android
+android/
+ios/
+
+# Node modules
+node_modules/
+
+# Expo builds
+.expo/
+web-build/
+dist/
+
+# Archivos grandes
+*.apk
+*.aab
+*.so
+*.jks
+
+# Build intermediates
+**/build/
+**/intermediates/
