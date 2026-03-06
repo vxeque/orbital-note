@@ -2,8 +2,11 @@
 
 A cross-platform note-taking application built with Expo and React Native, featuring Google OAuth authentication and Google Drive synchronization.
 
+<div align="center">
 
-** Deployments:** [Ver aplicación](https://tu-app.vercel.app)
+**[🚀 Live Orbital Note](https://orbitalnote.online)** | **[📖 Documentation](https://docs.orbitalnote.online)** 
+
+</div>
 
 ## 📋 Overview
 
@@ -22,8 +25,8 @@ Orbital Note is a modern, cloud-synchronized note-taking app available on **Andr
 
 ## 📸 Screenshots
 
-| Login | Home | Editor | List |
-|-------|------|--------|------|
+| Login               | Home                 | Editor                 | List                 |
+| ------------------- | -------------------- | ---------------------- | -------------------- |
 | ![Login](image.png) | ![Home](image-1.png) | ![Editor](image-2.png) | ![List](image-3.png) |
 
 ---
@@ -310,12 +313,12 @@ type ViewState = 'HOME' | 'LIST' | 'EDITOR';
 
 **Key Functions**:
 
-| Function | Purpose |
-|----------|---------|
-| `subirArchivoADrive()` | Upload/update note file to Drive |
-| `buscarArchivoPorNombre()` | Find existing note file |
-| `googleApiFetch()` | Authenticated fetch wrapper |
-| `getValidAccessToken()` | Get valid token or throw error |
+| Function                   | Purpose                          |
+| -------------------------- | -------------------------------- |
+| `subirArchivoADrive()`     | Upload/update note file to Drive |
+| `buscarArchivoPorNombre()` | Find existing note file          |
+| `googleApiFetch()`         | Authenticated fetch wrapper      |
+| `getValidAccessToken()`    | Get valid token or throw error   |
 
 **Sync Strategy**:
 - Create/update JSON files in Drive
@@ -389,19 +392,19 @@ RootLayout
 
 ## 🛠️ Tech Stack Details
 
-| Category | Technology | Purpose |
-|----------|-----------|---------|
-| **Runtime** | Expo 54.0+ | Cross-platform mobile framework |
-| **Language** | TypeScript 5+ | Type-safe development |
-| **Navigation** | Expo Router | File-based routing |
-| **State** | React Context API | User & theme state |
-| **Storage** | AsyncStorage | Local persistent storage |
-| **Auth** | Google OAuth 2.0 | Authentication |
-| **Cloud** | Google Drive API v3 | Cloud synchronization |
-| **Editors** | TipTap (web)<br>TenTap (mobile) | Rich text editing |
-| **UI** | React Native | Native UI components |
-| **Icons** | @expo/vector-icons | Icon library |
-| **Safe Area** | react-native-safe-area-context | Screen safe zone |
+| Category       | Technology                      | Purpose                         |
+| -------------- | ------------------------------- | ------------------------------- |
+| **Runtime**    | Expo 54.0+                      | Cross-platform mobile framework |
+| **Language**   | TypeScript 5+                   | Type-safe development           |
+| **Navigation** | Expo Router                     | File-based routing              |
+| **State**      | React Context API               | User & theme state              |
+| **Storage**    | AsyncStorage                    | Local persistent storage        |
+| **Auth**       | Google OAuth 2.0                | Authentication                  |
+| **Cloud**      | Google Drive API v3             | Cloud synchronization           |
+| **Editors**    | TipTap (web)<br>TenTap (mobile) | Rich text editing               |
+| **UI**         | React Native                    | Native UI components            |
+| **Icons**      | @expo/vector-icons              | Icon library                    |
+| **Safe Area**  | react-native-safe-area-context  | Screen safe zone                |
 
 ---
 
