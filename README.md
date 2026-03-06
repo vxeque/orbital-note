@@ -2,6 +2,9 @@
 
 A cross-platform note-taking application built with Expo and React Native, featuring Google OAuth authentication and Google Drive synchronization.
 
+
+** Deployments:** [Ver aplicación](https://tu-app.vercel.app)
+
 ## 📋 Overview
 
 Orbital Note is a modern, cloud-synchronized note-taking app available on **Android** and **Web**. It provides users with a seamless experience across devices using Google authentication and real-time synchronization with Google Drive. The app features a rich text editor with support for mentions, tags, and cross-note references.
