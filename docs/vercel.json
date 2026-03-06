@@ -4,10 +4,7 @@
   "public": true,
   "buildCommand": "echo 'Documentation site'",
   "outputDirectory": ".",
-  "env": [],
   "regions": ["iad1"],
-  "domains": ["docs.orbitalnote.online"],
-  "functions": {},
   "rewrites": [
     {
       "source": "/(.*)",
@@ -18,18 +15,9 @@
     {
       "source": "/(.*)",
       "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=3600, s-maxage=3600"
-        },
-        {
-          "key": "X-Content-Type-Options",
-          "value": "nosniff"
-        },
-        {
-          "key": "X-Frame-Options",
-          "value": "SAMEORIGIN"
-        }
+        { "key": "Cache-Control", "value": "public, max-age=3600, s-maxage=3600" },
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "SAMEORIGIN" }
       ]
     }
   ],
